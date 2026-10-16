@@ -8,10 +8,12 @@ xsim.dir/
 __pycache__/
 *.pyc
 
-# Vivado 工程产物
-fpga/*.xpr
-fpga/*.jou
-fpga/*.log
+# Vivado 工程产物（目录级：整个工程/日志/中间文件都不入库）
+fpga/vivado_*/
+fpga/scripts/*.log
+fpga/scripts/vivado*
+fpga/scripts/program.hex
 *.bit
 *.ltx
 *.rpt
+*.jou
