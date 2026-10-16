@@ -94,15 +94,107 @@
 - `tb_pipe_basic`（basic.s，含分支循环 + la/jalr 函数调用）：**PASS**，74 周期停机。
 - `tb_pipe_hazard`（hazard.s，4 级 RAW 转发链 + Load-Use 停顿 + 双 load 依赖）：**PASS**，34 周期。
 - `tb_pipe_branch`（branch.s，双循环分支 + 无符号比较 + call/ret）：**PASS**，352 周期。
-- `tb_pipe_full`（full.s，全 RV32I 指令集：lui/auipc/R 型算术移位比较逻辑/I 型立即数与移位/全宽度访存/6 种分支/jal/jalr + 陷阱检查）：**PASS**，156 周期。
+- `tb_pipe_full`（full.s，全 RV32I 指令集：lui/auipc/R 型算术移位比较逻辑/I 型立即数与立即数移位/全宽度访存/6 种分支/jal/jalr + 陷阱检查）：**PASS**，156 周期。
+- 回归：`tb_single`（单周期整机，LUI 修复后重跑）**PASS**，56 周期；`tb_pipe_basic/hazard/branch/full` 全部 **PASS**。
 - 修复清单：riscv_pipeline.v（PC 方向、ID/EX flush、load 转发源、I 型 add/sub 误判）、pipe_regs.v（flush 清控制、valid 传递、opcode 传递）、alu.v（LUI）。
+
+**汇编器行为补充**：`li rd, 大立即数` 且低 12 位为 0 时，汇编器只输出 `lui`（省略 `addi rd,rd,0`）——合法优化，
+空出的指令槽读 0x00000000（=`lui x0,0`，无副作用 NOP），程序逻辑不受影响（led.s 验证）。
 
 ### 结论
 五级流水线（转发 + 停顿 + 2-bit 分支预测 + BTB + jalr 对齐 + MMIO）在仿真层面跑通全部测试；
 7 个 bug（4 个流水线机制 + 1 个 ALU + 2 个译码）均已修复并有对应测试覆盖，可以作为上板前的基础。
+LUI 修复后单周期整机回归通过，两版 CPU 行为一致。
 
 ### 下一步
 1. 系统级验证：riscv-tests 类更严格的指令/边界测试（访存未对齐、立即数边界、分支全 6 型）。
-2. FPGA 工程：Vivado 2019.1 TCL 脚本 + NetFPGA SUME（XC7VX690T）与 ZedBoard（xc7z020）约束 + 上板指南。
-3. README 更新流水线进度；Git 提交 v0.2（流水线 + 仿真全部通过）。
+2. FPGA 工程（进行中）：Vivado 2019.1 TCL 脚本 + NetFPGA SUME（XC7VX690T）与 ZedBoard（xc7z020）约束 + 上板指南 + LED 演示程序。
+3. Git 提交 v0.2（流水线 + 仿真全部通过，本地已提交 d7af402，推送因网络失败待重试）。
+
+---
+
+## 2026-10-16（第 3 次工作：FPGA 双板工程）
+
+### 工作目标
+1. FPGA 顶层 `fpga_top.v`：CPU + 板载时钟/复位 + MMIO→LED 演示。
+2. 双板约束：ZedBoard（xc7z020，官方引脚）+ SUME（XC7VX690T，模板待核对引脚）。
+3. 一键 TCL 工程脚本（建工程/加 RTL/复制 hex/综合/实现/比特流）。
+4. LED 跑马灯演示程序 led.s；上板指南。
+
+### 遇到的问题与解决方法
+| # | 问题 | 现象/定位方法 | 根因 | 解决方法 |
+|---|---|---|---|---|
+| 10 | Vivado 2019.1 综合报错 `Strategy 'Performance_Explore' is not supported by the flow 'Vivado Synthesis 2019'` | batch 日志直接给出策略名不支持的报错 | Performance_Explore 是旧版综合策略名，2019.1 已改名 | 删除策略设置，用 2019.1 默认综合策略（Performance 影响不大，流水线规模很小） |
+| 11 | led.s 汇编后 lst/hex 地址 0x04 与 0x2C 缺失（`li` 大立即数后"少一条"） | 对比 lst 发现 addi rd,rd,0 未生成 | 汇编器对低 12 位为 0 的大立即数省略 addi 0（合法优化） | 确认空槽读 0x00000000=`lui x0,0` 无副作用，程序正确；记录该行为并用于后续测试程序 |
+| 12 | 比特流生成时 DRC 报 6 个 LED 端口 UCIO-1（无 LOC）| DRC 列表：led[0,1,3,5,6,7] 未约束而 led[2,4] 有 | **凭记忆写的 ZedBoard LED 引脚（T14/T15/P16...）在 clg484 封装上不存在**，约束静默失败 | 从 Vivado 自带板卡文件（`data/boards/board_files/zed/1.4/part0_pins.xml`）提取官方引脚：LED=T22 T21 U22 U21 V22 W22 U19 U14、时钟 Y9、按钮 P16。**方法：引脚类信息不要凭记忆，直接读板卡文件/原理图** |
+| 13 | 综合后 `$readmemh("program.hex")` 报 Critical Warning `could not open`，比特流里 imem 为空 | 日志 Synth 8-4445 | $readmemh 相对路径按**综合进程 cwd** 解析，launch_runs 的 cwd 不是工程目录（脚本在 fpga/scripts 下运行） | TCL 里 `create_project` 后 `cd $proj_dir`，使综合进程 cwd=工程目录（program.hex 已复制在那里）。**方法：上板类 bug 要看综合日志的 Critical Warning，别只看"综合通过"** |
+
+### 实验结果
+- `tb_single` 回归 PASS（LUI 修复后单周期不受影响）。
+- led.s 汇编通过，机器码正确（13 条指令，含 MMIO 写 + 软件延时循环）。
+- ZedBoard：综合/实现/比特流 **成功**（33.333MHz 时序收敛），`fpga_top.bit` 生成。
+- SUME（XC7VX690T）：综合冒烟 **通过**（0 errors）；引脚待按原理图核对后出比特流。
+
+### 结论
+FPGA 工程骨架可用：顶层复用已验证的 riscv_pipeline，仅需板级 IO 包装；
+ZedBoard 引脚已从 Vivado 自带板卡文件核对（不是凭记忆）；
+$readmemh 的 cwd 问题已修复（TCL cd 到工程目录），综合不再丢程序。
+
+### 下一步
+1. 确认 ZedBoard 修复 $readmemh 后的比特流（无 Critical Warning）。
+2. SUME 引脚核对后出比特流（build_sume.tcl）。
+3. Git 提交 v0.2（含流水线 + FPGA 工程）+ README/risc-v.md 更新（推送网络恢复后重试）。
+4. 系统级验证（riscv-tests 类）作为上板后对照。*
+
+---
+
+## 2026-10-16（第 4 次工作：AC7021B 实机烧录）
+
+### 工作目标
+1. 把五级流水线 CPU + LED 跑马灯程序**实际烧录**到实验室 Zynq-7020 板卡，验证"能上板"。
+2. 澄清烧录通道（UART vs JTAG）并打通 JTAG 下载全流程。
+
+### 环境情况（重要更正）
+- **实验室实际手头板卡 = ALINX AC7021B**（xc7z020clg484-1，工业级），**不是 ZedBoard**、也不是 NetFPGA SUME。
+- AC7021B = 核心板 + 底板。烧录通道：
+  - **核心板 MINI USB = CP2102N UART 桥**（USB\VID_10C4&PID_EA60）：**只能串口通信，不能配置 FPGA**。
+  - **底板 MINI USB = FT232HL USB-JTAG 桥**（USB\VID_0403&PID_6014，被 hw_server 识别为 Digilent cable）：**烧录必须走这里**。
+  - 核心板 J1 为 6 针 JTAG 排针（需外接下载器）。
+- 板卡 PL 时钟 50MHz（Y9，LVCMOS33）；PL 用户 LED 仅 1 个 LED2（R7，**低电平点亮**，标量端口 led）。
+- 启动拨码 SW1：ON,ON=JTAG 模式（烧录后可从 JTAG 启动）。
+
+### 遇到的问题与解决方法（含 debug 过程）
+| # | 问题 | 现象/定位方法 | 根因 | 解决方法 |
+|---|---|---|---|---|
+| 14 | 综合后 `$readmemh("program.hex")` 仍报 `could not open`（第 3 次记录 #13 的 cd 方案在 AC7021B 工程无效） | 日志 Synth 8-4445；`check_pwd.tcl` 显示综合进程 cwd=**fpga/scripts**，但把 hex 复制到 cwd 仍失败 | $readmemh 相对路径**固定按 `<工程>.runs/synth_1` 目录解析**，与综合进程 cwd 无关 | TCL 里 `file mkdir <工程>.runs/synth_1` 并把 program.hex 复制进该目录 → Synth 8-3876 `read successfully`。**方法：先验证假设（cwd）再改，两次都不成立就要换假设（Vivado 的 readmem 目录规则）** |
+| 15 | DRC NSTD-1/UCIO-1：端口 `led` 无 IO standard、无 LOC | DRC 报 Problem ports: **led**（不是 led[0]） | AC7021B 顶层端口 `led` 是**标量**（1 位），xdc 写 `[get_ports {led[0]}]` 匹配不到标量 | xdc 改 `[get_ports led]` + PACKAGE_PIN R7 / IOSTANDARD LVCMOS33 |
+| 16 | 烧录脚本 `$argv` 收不到 `-tclargs` 且一度 BITSTREAM NOT FOUND | batch 日志 `ARGS: `（空）；`file exists` 又失败 | ① Vivado batch 模式 `-tclargs` 传参在 vivado.bat 下不可靠；② 日志行号与脚本对不上暴露**跑了旧文件**（Edit 落盘与执行有先后，需以最新 Read 为准） | 脚本内置默认 bit 路径（无参时烧 AC7021B 比特流），并保留 argv 覆盖；每次跑前 Read 确认脚本版本 |
+| 17 | `open_hw_manager` 报 `invalid command name` | batch 直接报命令不存在 | **Vivado 2019.1 的硬件管理器命令是 `open_hw`**（2020.x+ 才叫 open_hw_manager） | 改 `open_hw` |
+| 18 | hw_server 连上（TCP:localhost:3121）但 `open_hw_target` 报 no current hw_target | 系统 USB 设备列表：只有 CP2102N（UART，Status=Error），**无 FT232HL** | **插的是 UART 口**；UART 桥不连 JTAG，hw_server 自然看不到 target | 向用户解释 UART≠JTAG，请改插底板 FT232HL MINI USB 口 |
+| 19 | 换插后 FT232H 被识别（VID_0403&PID_6014），但 `open_hw_target` 后 **No matching hw_devices**（JTAG 链空） | hw_diag 日志：target 存在（Digilent/210512180081）但 DEVICES 空 | FT232H 枚举/驱动就绪需要时间，或首次扫描过早 | hw_diag 加 `refresh_hw_server` + 4 次 `refresh_hw_target` 重扫（间隔 800ms）→ TRY0 即读到 `arm_dap_0 xc7z020_1` |
+| 20 | 烧录脚本 `current_hw_device [lindex [get_hw_devices] 0]` 会选中 **arm_dap_0（ARM 调试口）而非 FPGA** | 日志 DEVICES=arm_dap_0 xc7z020_1 | Zynq JTAG 链有 2 个设备，第一个是 ARM DAP | 遍历设备按 `get_property PART` 匹配 `xc7z*` 选 FPGA，跳过 arm_dap |
+
+**debug 方法补充（本阶段新增）**
+1. **物理层先于软件层**：烧录失败先查"设备管理器有没有对应 USB 设备 / 状态是否 OK"，再查 hw_server——这次就是靠 `Get-PnpDevice` 一次性分清 UART(CP2102N) 与 JTAG(FT232H) 两个通道。
+2. **板卡资料是唯一事实来源**：AC7021B 引脚/烧录通道以官方手册（AX7021B_UG.pdf）为准，手册说 UART 不能烧录就不要跟用户"感觉能烧"纠缠，用探测结果说话。
+3. **综合类问题看 Critical Warning**：`Synth 8-4445` 一句就定位 readmem 失败；不要只看"综合 0 errors"。
+4. **TCL 脚本用默认值兜底**：batch 模式传参不可靠时，脚本内置默认路径，交互模式仍可传参覆盖。
+
+### 实验结果
+- **AC7021B 实机烧录成功**：hw_server 检测到 `Digilent/210512180081`（FT232H），JTAG 链读到 `arm_dap_0 xc7z020_1`，选中 `xc7z020_1`（PART=xc7z020），`program_hw_devices` 完成，日志 `=== PROGRAMMING DONE ===`。
+- 烧录的比特流 `fpga_top_ac7021b.bit`（4,045,676 字节）：五级流水线 CPU + led.s 跑马灯程序（$readmemh 已确认读入，Synth 8-3876）。
+- 板卡 LED2（R7，低电平点亮）应随跑马灯程序**周期闪烁**（跑马灯 8 位循环取最低位接 LED，软件延时控制频率）。
+
+### 结论
+五级流水线 CPU 已在**真实 Zynq-7020 板卡（AC7021B）上运行**——仿真→综合→实现→比特流→JTAG 烧录全链路打通；
+"USB 转串口能烧录"的说法不成立（CP2102N 只做 UART），实际靠底板 FT232HL USB-JTAG 口完成配置；
+Zynq JTAG 链包含 ARM DAP + FPGA 两个设备，烧录必须显式选中 xc7z020。
+
+### 下一步
+1. **请用户观察 AC7021B LED2 是否闪烁**——确认程序在板子上实际执行（肉眼验证）。
+2. ZedBoard 比特流用修复后脚本重生成（readmem 已烧入），作为第二块板备选。
+3. SUME（XC7VX690T）引脚按原理图核对后出比特流——满足"双板上板"。
+4. Git 提交：v0.2（流水线 d7af402）+ FPGA 工程 + 本次上板记录（推送重试）。
+5. 系统级验证（riscv-tests 类）作为上板后对照。
+
 

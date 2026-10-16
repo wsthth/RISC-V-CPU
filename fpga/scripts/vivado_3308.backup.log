@@ -1,0 +1,33 @@
+#-----------------------------------------------------------
+# Vivado v2019.1 (64-bit)
+# SW Build 2552052 on Fri May 24 14:49:42 MDT 2019
+# IP Build 2548770 on Fri May 24 18:01:18 MDT 2019
+# Start of session at: Fri Oct 16 16:47:23 2026
+# Process ID: 3308
+# Current directory: D:/my_project/RISC-V/fpga/scripts
+# Command line: vivado.exe -mode batch -source hw_diag.tcl
+# Log file: D:/my_project/RISC-V/fpga/scripts/vivado.log
+# Journal file: D:/my_project/RISC-V/fpga/scripts\vivado.jou
+#-----------------------------------------------------------
+source hw_diag.tcl
+# open_hw
+# connect_hw_server
+INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
+INFO: [Labtools 27-2222] Launching hw_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+****** Xilinx hw_server v2019.1
+  **** Build date : May 24 2019 at 15:13:31
+    ** Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+
+
+ERROR: [Labtoolstcl 44-199] No matching targets found on connected servers: localhost
+Resolution: If needed connect the desired target to a server and use command refresh_hw_server. Then rerun the get_hw_targets command.
+ERROR: [Common 17-39] 'get_hw_targets' failed due to earlier errors.
+
+    while executing
+"get_hw_targets"
+    invoked from within
+"puts "HW_TARGETS=[get_hw_targets]""
+    (file "hw_diag.tcl" line 3)
+INFO: [Common 17-206] Exiting Vivado at Fri Oct 16 16:47:29 2026...

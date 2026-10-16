@@ -1,0 +1,49 @@
+#-----------------------------------------------------------
+# Vivado v2019.1 (64-bit)
+# SW Build 2552052 on Fri May 24 14:49:42 MDT 2019
+# IP Build 2548770 on Fri May 24 18:01:18 MDT 2019
+# Start of session at: Fri Oct 16 16:53:26 2026
+# Process ID: 25808
+# Current directory: D:/my_project/RISC-V/fpga/scripts
+# Command line: vivado.exe -mode batch -source hw_diag.tcl
+# Log file: D:/my_project/RISC-V/fpga/scripts/vivado.log
+# Journal file: D:/my_project/RISC-V/fpga/scripts\vivado.jou
+#-----------------------------------------------------------
+source hw_diag.tcl
+# open_hw
+# connect_hw_server
+INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
+INFO: [Labtools 27-2222] Launching hw_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+****** Xilinx hw_server v2019.1
+  **** Build date : May 24 2019 at 15:13:31
+    ** Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+
+
+# set targets [get_hw_targets]
+# puts "HW_TARGETS=$targets"
+HW_TARGETS=localhost:3121/xilinx_tcf/Digilent/210512180081
+# if {[llength $targets] > 0} {
+#     set t [lindex $targets 0]
+#     open_hw_target $t
+#     puts "OPEN_TARGET=$t"
+#     # 多�?�刷新尝试扫�? JTAG 链（FT232H 初��化 / 板上电需要时间）
+#     refresh_hw_server
+#     for {set i 0} {$i < 4} {incr i} {
+#         refresh_hw_target [current_hw_target]
+#         set devs [get_hw_devices]
+#         puts "TRY$i DEVICES=$devs"
+#         if {[llength $devs] > 0} { break }
+#         after 800
+#     }
+#     foreach d [get_hw_devices] {
+#         puts "DEV: $d  IDCODE=[get_property IDCODE $d]  PART=[get_property PART $d]"
+#     }
+# }
+INFO: [Labtoolstcl 44-466] Opening hw_target localhost:3121/xilinx_tcf/Digilent/210512180081
+OPEN_TARGET=localhost:3121/xilinx_tcf/Digilent/210512180081
+TRY0 DEVICES=arm_dap_0 xc7z020_1
+DEV: arm_dap_0  IDCODE=01001011101000000000010001110111  PART=arm_dap
+DEV: xc7z020_1  IDCODE=00100011011100100111000010010011  PART=xc7z020
+INFO: [Common 17-206] Exiting Vivado at Fri Oct 16 16:53:34 2026...

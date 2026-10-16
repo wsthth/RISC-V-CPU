@@ -1,0 +1,5 @@
+set_property SRC_FILE_INFO {cfile:D:/my_project/RISC-V/fpga/constraints/ac7021b.xdc rfile:../../../../constraints/ac7021b.xdc id:1} [current_design]
+set_property src_info {type:XDC file:1 line:12 export:INPUT save:INPUT read:READ} [current_design]
+set_property PACKAGE_PIN Y9   [get_ports clk]
+set_property src_info {type:XDC file:1 line:17 export:INPUT save:INPUT read:READ} [current_design]
+set_property PACKAGE_PIN R7 [get_ports led]

@@ -1,0 +1,37 @@
+﻿
+****** Vivado v2019.1 (64-bit)
+  **** SW Build 2552052 on Fri May 24 14:49:42 MDT 2019
+  **** IP Build 2548770 on Fri May 24 18:01:18 MDT 2019
+    ** Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+
+source build_zed.tcl
+# set root "D:/my_project/RISC-V"
+# set proj_dir "$root/fpga/vivado_zed"
+# set part   xc7z020clg484-1
+# file delete -force $proj_dir
+# create_project riscv_zed $proj_dir -part $part -force
+# cd $proj_dir
+# add_files [list \
+#     "$root/rtl/common/alu.v" \
+#     "$root/rtl/common/regfile.v" \
+#     "$root/rtl/common/extend.v" \
+#     "$root/rtl/common/muxes.v" \
+#     "$root/rtl/common/flopr.v" \
+#     "$root/rtl/common/imem.v" \
+#     "$root/rtl/common/dmem.v" \
+#     "$root/rtl/common/branch_unit.v" \
+#     "$root/rtl/single_cycle/control_unit.v" \
+#     "$root/rtl/single_cycle/riscv_single.v" \
+#     "$root/rtl/pipeline/riscv_pipeline.v" \
+#     "$root/rtl/pipeline/pipe_regs.v" \
+#     "$root/rtl/pipeline/hazard_unit.v" \
+#     "$root/rtl/pipeline/forward_unit.v" \
+#     "$root/rtl/pipeline/branch_predictor.v" \
+#     "$root/fpga/fpga_top.v" \
+# ]
+# file copy -force "$root/testprog/hex/led.hex" "$proj_dir/program.hex"
+# set_property top fpga_top [current_fileset]
+# read_xdc "$root/fpga/constraints/zedboard.xdc"
+# set_property STEPS.SYNTH_DESIGN.ARGS.MORE_OPTIONS {-verilog_define PROGRAM_HEX="D:/my_project/RISC-V/fpga/vivado_zed/program.hex"} [get_runs synth_1]
+ERROR: [Common 17-170] Unknown option '-verilog_define PROGRAM_HEX="D:/my_project/RISC-V/fpga/vivado_zed/program.hex"', please type 'set_property -help' for usage info.
+INFO: [Common 17-206] Exiting Vivado at Fri Oct 16 16:26:36 2026...

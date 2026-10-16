@@ -88,7 +88,16 @@ RISC-V/
 
 ### 🔨 开发中
 5. 系统级更严格验证（访存未对齐、立即数边界等）
-6. FPGA 双板工程与上板（NetFPGA SUME + ZedBoard）
+6. FPGA 上板收尾：SUME 约束引脚核对（ZedBoard 已完成综合实现出比特流）
+
+## FPGA 上板（已完成 ZedBoard 全流程）
+
+- `fpga/fpga_top.v`：CPU + 板载时钟/复位 + MMIO→LED 跑马灯演示
+- `fpga/constraints/zedboard.xdc`：ZedBoard 官方引脚（Vivado 自带板卡文件核对）
+- `fpga/scripts/build_zed.tcl` / `build_sume.tcl`：一键综合/实现/比特流
+- 演示程序 `testprog/led.s`（写 0xF0000000 → LED）
+- ZedBoard 比特流已生成（33.333MHz 时序收敛）；SUME 待核对引脚
+- 详细步骤见 `fpga/README.md`
 
 ## 如何仿真（Vivado 2019.1）
 

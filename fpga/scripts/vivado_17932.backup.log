@@ -1,0 +1,40 @@
+#-----------------------------------------------------------
+# Vivado v2019.1 (64-bit)
+# SW Build 2552052 on Fri May 24 14:49:42 MDT 2019
+# IP Build 2548770 on Fri May 24 18:01:18 MDT 2019
+# Start of session at: Fri Oct 16 16:46:44 2026
+# Process ID: 17932
+# Current directory: D:/my_project/RISC-V/fpga/scripts
+# Command line: vivado.exe -mode batch -source program.tcl
+# Log file: D:/my_project/RISC-V/fpga/scripts/vivado.log
+# Journal file: D:/my_project/RISC-V/fpga/scripts\vivado.jou
+#-----------------------------------------------------------
+source program.tcl
+# puts "ARGS: $argv"
+ARGS: 
+# if {[llength $argv] >= 1} {
+#     set bit [lindex $argv 0]
+# } else {
+#     set bit "D:/my_project/RISC-V/fpga/vivado_ac7021b/riscv_ac7021b.runs/impl_1/fpga_top_ac7021b.bit"
+# }
+# puts "BITSTR=$bit"
+BITSTR=D:/my_project/RISC-V/fpga/vivado_ac7021b/riscv_ac7021b.runs/impl_1/fpga_top_ac7021b.bit
+# puts "BITEXISTS=[file exists $bit]"
+BITEXISTS=1
+# if {![file exists $bit]} {
+#     error "BITSTREAM NOT FOUND: $bit"
+# }
+# open_hw
+# connect_hw_server
+INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
+INFO: [Labtools 27-2222] Launching hw_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+****** Xilinx hw_server v2019.1
+  **** Build date : May 24 2019 at 15:13:31
+    ** Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+
+
+# open_hw_target
+ERROR: [Labtoolstcl 44-469] There is no current hw_target.
+INFO: [Common 17-206] Exiting Vivado at Fri Oct 16 16:46:51 2026...

@@ -1,0 +1,12 @@
+#-----------------------------------------------------------
+# Vivado v2019.1 (64-bit)
+# SW Build 2552052 on Fri May 24 14:49:42 MDT 2019
+# IP Build 2548770 on Fri May 24 18:01:18 MDT 2019
+# Start of session at: Fri Oct 16 16:39:33 2026
+# Process ID: 28716
+# Current directory: D:/my_project/RISC-V/fpga/vivado_ac7021b/riscv_ac7021b.runs/synth_1
+# Command line: vivado.exe -log fpga_top_ac7021b.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source fpga_top_ac7021b.tcl
+# Log file: D:/my_project/RISC-V/fpga/vivado_ac7021b/riscv_ac7021b.runs/synth_1/fpga_top_ac7021b.vds
+# Journal file: D:/my_project/RISC-V/fpga/vivado_ac7021b/riscv_ac7021b.runs/synth_1\vivado.jou
+#-----------------------------------------------------------
+source fpga_top_ac7021b.tcl -notrace

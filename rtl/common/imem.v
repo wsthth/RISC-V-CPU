@@ -9,6 +9,14 @@ module imem #(parameter DEPTH = 1024) (
     output wire [31:0] rd
 );
     reg [31:0] mem [0:DEPTH-1];
+    // 程序加载：
+    //   仿真：run_sim.ps1 复制 hex 为运行目录下的 program.hex
+    //   综合：Vivado 由 TCL 通过 -verilog_define PROGRAM_HEX=<绝对路径> 指定；
+    //         未定义时回退 program.hex（工程目录内）
+`ifdef PROGRAM_HEX
+    initial $readmemh(`"PROGRAM_HEX`", mem);
+`else
     initial $readmemh("program.hex", mem);
+`endif
     assign rd = mem[a[31:2]];
 endmodule

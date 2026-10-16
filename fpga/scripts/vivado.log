@@ -1,0 +1,68 @@
+#-----------------------------------------------------------
+# Vivado v2019.1 (64-bit)
+# SW Build 2552052 on Fri May 24 14:49:42 MDT 2019
+# IP Build 2548770 on Fri May 24 18:01:18 MDT 2019
+# Start of session at: Fri Oct 16 16:54:18 2026
+# Process ID: 20976
+# Current directory: D:/my_project/RISC-V/fpga/scripts
+# Command line: vivado.exe -mode batch -source program.tcl
+# Log file: D:/my_project/RISC-V/fpga/scripts/vivado.log
+# Journal file: D:/my_project/RISC-V/fpga/scripts\vivado.jou
+#-----------------------------------------------------------
+source program.tcl
+# puts "ARGS: $argv"
+ARGS: 
+# if {[llength $argv] >= 1} {
+#     set bit [lindex $argv 0]
+# } else {
+#     set bit "D:/my_project/RISC-V/fpga/vivado_ac7021b/riscv_ac7021b.runs/impl_1/fpga_top_ac7021b.bit"
+# }
+# puts "BITSTR=$bit"
+BITSTR=D:/my_project/RISC-V/fpga/vivado_ac7021b/riscv_ac7021b.runs/impl_1/fpga_top_ac7021b.bit
+# puts "BITEXISTS=[file exists $bit]"
+BITEXISTS=1
+# if {![file exists $bit]} {
+#     error "BITSTREAM NOT FOUND: $bit"
+# }
+# open_hw
+# connect_hw_server
+INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
+INFO: [Labtools 27-2222] Launching hw_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+****** Xilinx hw_server v2019.1
+  **** Build date : May 24 2019 at 15:13:31
+    ** Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+
+
+# open_hw_target
+INFO: [Labtoolstcl 44-466] Opening hw_target localhost:3121/xilinx_tcf/Digilent/210512180081
+# refresh_hw_server
+# set devs [get_hw_devices]
+# puts "DEVICES=$devs"
+DEVICES=arm_dap_0 xc7z020_1
+# if {[llength $devs] == 0} {
+#     error "NO HW DEVICE FOUND: 请�?��? JTAG 连接/板卡供电（FT232HL / Digilent USB-JTAG�?"
+# }
+# set chosen ""
+# foreach d $devs {
+#     set part [get_property PART $d]
+#     puts "DEV $d PART=$part"
+#     if {[string match "xc7z*" $part]} { set chosen $d }
+# }
+DEV arm_dap_0 PART=arm_dap
+DEV xc7z020_1 PART=xc7z020
+# if {$chosen eq ""} { set chosen [lindex $devs 0] }
+# current_hw_device $chosen
+# set_property PROGRAM.FILE $bit [current_hw_device]
+# refresh_hw_device [current_hw_device]
+INFO: [Labtools 27-1435] Device xc7z020 (JTAG device index = 1) is not programmed (DONE status = 0).
+# program_hw_devices [current_hw_device]
+INFO: [Labtools 27-3164] End of startup status: HIGH
+# puts "=== PROGRAMMING DONE ==="
+=== PROGRAMMING DONE ===
+# puts "Device : [get_property NAME [current_hw_device]]"
+Device : xc7z020_1
+# puts "Bitstream: $bit"
+Bitstream: D:/my_project/RISC-V/fpga/vivado_ac7021b/riscv_ac7021b.runs/impl_1/fpga_top_ac7021b.bit
+INFO: [Common 17-206] Exiting Vivado at Fri Oct 16 16:54:30 2026...

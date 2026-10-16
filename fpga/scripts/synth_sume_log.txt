@@ -1,0 +1,724 @@
+﻿
+****** Vivado v2019.1 (64-bit)
+  **** SW Build 2552052 on Fri May 24 14:49:42 MDT 2019
+  **** IP Build 2548770 on Fri May 24 18:01:18 MDT 2019
+    ** Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+
+source synth_sume_check.tcl
+# set root "D:/my_project/RISC-V"
+# set proj_dir "$root/fpga/vivado_sume_check"
+# file delete -force $proj_dir
+# create_project riscv_sume_check $proj_dir -part xc7vx690tffg1761-3 -force
+# add_files [list \
+#     "$root/rtl/common/alu.v" \
+#     "$root/rtl/common/regfile.v" \
+#     "$root/rtl/common/extend.v" \
+#     "$root/rtl/common/muxes.v" \
+#     "$root/rtl/common/flopr.v" \
+#     "$root/rtl/common/imem.v" \
+#     "$root/rtl/common/dmem.v" \
+#     "$root/rtl/common/branch_unit.v" \
+#     "$root/rtl/single_cycle/control_unit.v" \
+#     "$root/rtl/single_cycle/riscv_single.v" \
+#     "$root/rtl/pipeline/riscv_pipeline.v" \
+#     "$root/rtl/pipeline/pipe_regs.v" \
+#     "$root/rtl/pipeline/hazard_unit.v" \
+#     "$root/rtl/pipeline/forward_unit.v" \
+#     "$root/rtl/pipeline/branch_predictor.v" \
+#     "$root/fpga/fpga_top.v" \
+# ]
+# file copy -force "$root/testprog/hex/led.hex" "$proj_dir/program.hex"
+# set_property top fpga_top [current_fileset]
+# synth_design -top fpga_top -part xc7vx690tffg1761-3
+Command: synth_design -top fpga_top -part xc7vx690tffg1761-3
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7vx690t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7vx690t'
+INFO: Launching helper process for spawning children vivado processes
+INFO: Helper process launched with PID 5528 
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 567.820 ; gain = 183.027
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'fpga_top' [D:/my_project/RISC-V/fpga/fpga_top.v:13]
+INFO: [Synth 8-6157] synthesizing module 'riscv_pipeline' [D:/my_project/RISC-V/rtl/pipeline/riscv_pipeline.v:13]
+INFO: [Synth 8-6157] synthesizing module 'flopr' [D:/my_project/RISC-V/rtl/common/flopr.v:5]
+	Parameter W bound to: 32 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'flopr' (1#1) [D:/my_project/RISC-V/rtl/common/flopr.v:5]
+INFO: [Synth 8-6157] synthesizing module 'imem' [D:/my_project/RISC-V/rtl/common/imem.v:7]
+	Parameter DEPTH bound to: 1024 - type: integer 
+CRITICAL WARNING: [Synth 8-4445] could not open $readmem data file 'program.hex'; please make sure the file is added to project and has read permission, ignoring [D:/my_project/RISC-V/rtl/common/imem.v:12]
+
+Warning: Trying to implement RAM in registers. Block RAM or DRAM implementation is not possible for one or more of the following reasons :
+	1: Unable to determine number of words or word size in RAM. 
+	2: No valid read/write found for RAM. 
+RAM dissolved into registers
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+WARNING: [Synth 8-3848] Net mem in module/entity imem does not have driver. [D:/my_project/RISC-V/rtl/common/imem.v:11]
+INFO: [Common 17-14] Message 'Synth 8-3848' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-6155] done synthesizing module 'imem' (2#1) [D:/my_project/RISC-V/rtl/common/imem.v:7]
+INFO: [Synth 8-6157] synthesizing module 'reg_ifid' [D:/my_project/RISC-V/rtl/pipeline/pipe_regs.v:11]
+INFO: [Synth 8-6155] done synthesizing module 'reg_ifid' (3#1) [D:/my_project/RISC-V/rtl/pipeline/pipe_regs.v:11]
+INFO: [Synth 8-6157] synthesizing module 'regfile' [D:/my_project/RISC-V/rtl/common/regfile.v:7]
+	Parameter W bound to: 32 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'regfile' (4#1) [D:/my_project/RISC-V/rtl/common/regfile.v:7]
+INFO: [Synth 8-6157] synthesizing module 'extend' [D:/my_project/RISC-V/rtl/common/extend.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'extend' (5#1) [D:/my_project/RISC-V/rtl/common/extend.v:6]
+INFO: [Synth 8-6157] synthesizing module 'control_unit' [D:/my_project/RISC-V/rtl/single_cycle/control_unit.v:16]
+INFO: [Synth 8-226] default block is never used [D:/my_project/RISC-V/rtl/single_cycle/control_unit.v:54]
+INFO: [Synth 8-6155] done synthesizing module 'control_unit' (6#1) [D:/my_project/RISC-V/rtl/single_cycle/control_unit.v:16]
+INFO: [Synth 8-6157] synthesizing module 'hazard_unit' [D:/my_project/RISC-V/rtl/pipeline/hazard_unit.v:7]
+INFO: [Synth 8-6155] done synthesizing module 'hazard_unit' (7#1) [D:/my_project/RISC-V/rtl/pipeline/hazard_unit.v:7]
+INFO: [Synth 8-6157] synthesizing module 'reg_idex' [D:/my_project/RISC-V/rtl/pipeline/pipe_regs.v:38]
+INFO: [Synth 8-6155] done synthesizing module 'reg_idex' (8#1) [D:/my_project/RISC-V/rtl/pipeline/pipe_regs.v:38]
+INFO: [Synth 8-6157] synthesizing module 'forward_unit' [D:/my_project/RISC-V/rtl/pipeline/forward_unit.v:10]
+INFO: [Synth 8-6155] done synthesizing module 'forward_unit' (9#1) [D:/my_project/RISC-V/rtl/pipeline/forward_unit.v:10]
+INFO: [Synth 8-6157] synthesizing module 'mux3' [D:/my_project/RISC-V/rtl/common/muxes.v:13]
+	Parameter W bound to: 32 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'mux3' (10#1) [D:/my_project/RISC-V/rtl/common/muxes.v:13]
+INFO: [Synth 8-226] default block is never used [D:/my_project/RISC-V/rtl/pipeline/riscv_pipeline.v:173]
+INFO: [Synth 8-6157] synthesizing module 'mux2' [D:/my_project/RISC-V/rtl/common/muxes.v:5]
+	Parameter W bound to: 32 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'mux2' (11#1) [D:/my_project/RISC-V/rtl/common/muxes.v:5]
+INFO: [Synth 8-6157] synthesizing module 'alu' [D:/my_project/RISC-V/rtl/common/alu.v:8]
+	Parameter W bound to: 32 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'alu' (12#1) [D:/my_project/RISC-V/rtl/common/alu.v:8]
+INFO: [Synth 8-6157] synthesizing module 'branch_unit' [D:/my_project/RISC-V/rtl/common/branch_unit.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'branch_unit' (13#1) [D:/my_project/RISC-V/rtl/common/branch_unit.v:6]
+INFO: [Synth 8-6157] synthesizing module 'branch_predictor' [D:/my_project/RISC-V/rtl/pipeline/branch_predictor.v:18]
+	Parameter N bound to: 128 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'branch_predictor' (14#1) [D:/my_project/RISC-V/rtl/pipeline/branch_predictor.v:18]
+INFO: [Synth 8-6157] synthesizing module 'reg_exmem' [D:/my_project/RISC-V/rtl/pipeline/pipe_regs.v:102]
+INFO: [Synth 8-6155] done synthesizing module 'reg_exmem' (15#1) [D:/my_project/RISC-V/rtl/pipeline/pipe_regs.v:102]
+INFO: [Synth 8-6157] synthesizing module 'dmem' [D:/my_project/RISC-V/rtl/common/dmem.v:7]
+	Parameter DEPTH bound to: 1024 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'dmem' (16#1) [D:/my_project/RISC-V/rtl/common/dmem.v:7]
+INFO: [Synth 8-6157] synthesizing module 'reg_memwb' [D:/my_project/RISC-V/rtl/pipeline/pipe_regs.v:140]
+INFO: [Synth 8-6155] done synthesizing module 'reg_memwb' (17#1) [D:/my_project/RISC-V/rtl/pipeline/pipe_regs.v:140]
+INFO: [Synth 8-6157] synthesizing module 'mux4' [D:/my_project/RISC-V/rtl/common/muxes.v:21]
+	Parameter W bound to: 32 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'mux4' (18#1) [D:/my_project/RISC-V/rtl/common/muxes.v:21]
+INFO: [Synth 8-6155] done synthesizing module 'riscv_pipeline' (19#1) [D:/my_project/RISC-V/rtl/pipeline/riscv_pipeline.v:13]
+INFO: [Synth 8-6155] done synthesizing module 'fpga_top' (20#1) [D:/my_project/RISC-V/fpga/fpga_top.v:13]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[31]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[30]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[29]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[28]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[27]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[26]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[25]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[24]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[23]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[22]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[21]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[20]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[19]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[18]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[17]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[16]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[15]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[14]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[13]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[12]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[31]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[30]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[29]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[28]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[27]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[26]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[25]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[24]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[23]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[22]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[21]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[20]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[19]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[18]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[17]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[16]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[15]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[14]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[13]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[12]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[11]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[10]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[9]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[1]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port pcf[0]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[31]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[30]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[29]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[28]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[27]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[26]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[25]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[24]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[23]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[22]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[21]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[20]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[19]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[18]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[17]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[16]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[15]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[14]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[13]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[12]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[11]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[10]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[9]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[1]
+WARNING: [Synth 8-3331] design branch_predictor has unconnected port branch_pc[0]
+WARNING: [Synth 8-3331] design control_unit has unconnected port funct7[6]
+WARNING: [Synth 8-3331] design control_unit has unconnected port funct7[4]
+WARNING: [Synth 8-3331] design control_unit has unconnected port funct7[3]
+WARNING: [Synth 8-3331] design control_unit has unconnected port funct7[2]
+WARNING: [Synth 8-3331] design control_unit has unconnected port funct7[1]
+WARNING: [Synth 8-3331] design control_unit has unconnected port funct7[0]
+WARNING: [Synth 8-3331] design imem has unconnected port a[31]
+WARNING: [Synth 8-3331] design imem has unconnected port a[30]
+WARNING: [Synth 8-3331] design imem has unconnected port a[29]
+WARNING: [Synth 8-3331] design imem has unconnected port a[28]
+WARNING: [Synth 8-3331] design imem has unconnected port a[27]
+WARNING: [Synth 8-3331] design imem has unconnected port a[26]
+WARNING: [Synth 8-3331] design imem has unconnected port a[25]
+WARNING: [Synth 8-3331] design imem has unconnected port a[24]
+WARNING: [Synth 8-3331] design imem has unconnected port a[23]
+WARNING: [Synth 8-3331] design imem has unconnected port a[22]
+WARNING: [Synth 8-3331] design imem has unconnected port a[21]
+WARNING: [Synth 8-3331] design imem has unconnected port a[20]
+WARNING: [Synth 8-3331] design imem has unconnected port a[19]
+WARNING: [Synth 8-3331] design imem has unconnected port a[18]
+WARNING: [Synth 8-3331] design imem has unconnected port a[17]
+WARNING: [Synth 8-3331] design imem has unconnected port a[16]
+WARNING: [Synth 8-3331] design imem has unconnected port a[15]
+WARNING: [Synth 8-3331] design imem has unconnected port a[14]
+WARNING: [Synth 8-3331] design imem has unconnected port a[13]
+WARNING: [Synth 8-3331] design imem has unconnected port a[12]
+WARNING: [Synth 8-3331] design imem has unconnected port a[1]
+WARNING: [Synth 8-3331] design imem has unconnected port a[0]
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:03 ; elapsed = 00:00:03 . Memory (MB): peak = 658.941 ; gain = 274.148
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:03 ; elapsed = 00:00:04 . Memory (MB): peak = 658.941 ; gain = 274.148
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7vx690tffg1761-3
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:03 ; elapsed = 00:00:04 . Memory (MB): peak = 658.941 ; gain = 274.148
+---------------------------------------------------------------------------------
+INFO: [Device 21-403] Loading part xc7vx690tffg1761-3
+INFO: [Synth 8-5587] ROM size for "regwrite" is below threshold of ROM address width. It will be mapped to LUTs
+INFO: [Synth 8-5587] ROM size for "alusrca" is below threshold of ROM address width. It will be mapped to LUTs
+INFO: [Synth 8-5546] ROM "alusrcb" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "memwrite" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "resultsrc" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "branch" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "jump" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "aluop" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "immsrc" won't be mapped to RAM because it is too sparse
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:06 ; elapsed = 00:00:05 . Memory (MB): peak = 836.551 ; gain = 451.758
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     32 Bit       Adders := 3     
+	   3 Input     32 Bit       Adders := 1     
+	   2 Input      2 Bit       Adders := 2     
++---XORs : 
+	   2 Input     32 Bit         XORs := 1     
++---Registers : 
+	               32 Bit    Registers := 142   
+	                8 Bit    Registers := 1     
+	                7 Bit    Registers := 2     
+	                5 Bit    Registers := 5     
+	                3 Bit    Registers := 2     
+	                2 Bit    Registers := 132   
+	                1 Bit    Registers := 145   
++---RAMs : 
+	              32K Bit         RAMs := 1     
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 20    
+	   8 Input     32 Bit        Muxes := 1     
+	   4 Input     32 Bit        Muxes := 2     
+	   6 Input     32 Bit        Muxes := 1     
+	   2 Input     16 Bit        Muxes := 1     
+	   4 Input      8 Bit        Muxes := 1     
+	   4 Input      4 Bit        Muxes := 2     
+	   8 Input      4 Bit        Muxes := 2     
+	  10 Input      3 Bit        Muxes := 1     
+	   2 Input      3 Bit        Muxes := 3     
+	  10 Input      2 Bit        Muxes := 2     
+	   2 Input      2 Bit        Muxes := 7     
+	   2 Input      1 Bit        Muxes := 133   
+	  10 Input      1 Bit        Muxes := 6     
+	   4 Input      1 Bit        Muxes := 1     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Hierarchical Component Statistics 
+---------------------------------------------------------------------------------
+Hierarchical RTL Component report 
+Module fpga_top 
+Detailed RTL Component Info : 
++---Registers : 
+	                8 Bit    Registers := 1     
+Module flopr 
+Detailed RTL Component Info : 
++---Registers : 
+	               32 Bit    Registers := 1     
+Module reg_ifid 
+Detailed RTL Component Info : 
++---Registers : 
+	               32 Bit    Registers := 2     
+	                1 Bit    Registers := 2     
++---Muxes : 
+	   2 Input      1 Bit        Muxes := 2     
+Module regfile 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 2     
+Module control_unit 
+Detailed RTL Component Info : 
++---Muxes : 
+	   4 Input      4 Bit        Muxes := 1     
+	   8 Input      4 Bit        Muxes := 1     
+	  10 Input      3 Bit        Muxes := 1     
+	   2 Input      3 Bit        Muxes := 1     
+	  10 Input      2 Bit        Muxes := 2     
+	  10 Input      1 Bit        Muxes := 6     
+	   2 Input      1 Bit        Muxes := 1     
+Module reg_idex 
+Detailed RTL Component Info : 
++---Registers : 
+	               32 Bit    Registers := 4     
+	                7 Bit    Registers := 2     
+	                5 Bit    Registers := 3     
+	                3 Bit    Registers := 1     
+	                2 Bit    Registers := 2     
+	                1 Bit    Registers := 9     
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 2     
+Module forward_unit 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 2     
+Module mux3 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 2     
+Module mux2 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 1     
+Module alu 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     32 Bit       Adders := 1     
+	   3 Input     32 Bit       Adders := 1     
++---XORs : 
+	   2 Input     32 Bit         XORs := 1     
+Module branch_predictor 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input      2 Bit       Adders := 2     
++---Registers : 
+	               32 Bit    Registers := 128   
+	                2 Bit    Registers := 128   
+	                1 Bit    Registers := 128   
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 3     
+	   2 Input      1 Bit        Muxes := 128   
+Module reg_exmem 
+Detailed RTL Component Info : 
++---Registers : 
+	               32 Bit    Registers := 3     
+	                5 Bit    Registers := 1     
+	                3 Bit    Registers := 1     
+	                2 Bit    Registers := 1     
+	                1 Bit    Registers := 3     
+Module dmem 
+Detailed RTL Component Info : 
++---RAMs : 
+	              32K Bit         RAMs := 1     
++---Muxes : 
+	   8 Input     32 Bit        Muxes := 1     
+	   4 Input     32 Bit        Muxes := 2     
+	   2 Input     32 Bit        Muxes := 1     
+	   6 Input     32 Bit        Muxes := 1     
+	   2 Input     16 Bit        Muxes := 1     
+	   4 Input      8 Bit        Muxes := 1     
+	   2 Input      1 Bit        Muxes := 1     
+	   4 Input      1 Bit        Muxes := 1     
+Module reg_memwb 
+Detailed RTL Component Info : 
++---Registers : 
+	               32 Bit    Registers := 3     
+	                5 Bit    Registers := 1     
+	                2 Bit    Registers := 1     
+	                1 Bit    Registers := 2     
+Module mux4 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 3     
+Module riscv_pipeline 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     32 Bit       Adders := 2     
++---Registers : 
+	               32 Bit    Registers := 1     
+	                1 Bit    Registers := 1     
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 8     
+	   4 Input      4 Bit        Muxes := 1     
+	   8 Input      4 Bit        Muxes := 1     
+	   2 Input      3 Bit        Muxes := 2     
+	   2 Input      1 Bit        Muxes := 1     
+---------------------------------------------------------------------------------
+Finished RTL Hierarchical Component Statistics
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 3600 (col length:200)
+BRAMs: 2940 (col length: RAMB18 200 RAMB36 100)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+Warning: Parallel synthesis criteria is not met 
+INFO: [Synth 8-5587] ROM size for "cu/regwrite" is below threshold of ROM address width. It will be mapped to LUTs
+INFO: [Synth 8-5587] ROM size for "cu/alusrca" is below threshold of ROM address width. It will be mapped to LUTs
+INFO: [Synth 8-5546] ROM "cu/alusrcb" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "cu/memwrite" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "cu/resultsrc" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "cu/branch" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "cu/jump" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "cu/aluop" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "cu/immsrc" won't be mapped to RAM because it is too sparse
+WARNING: [Synth 8-3331] design dmem has unconnected port a[31]
+WARNING: [Synth 8-3331] design dmem has unconnected port a[30]
+INFO: [Common 17-14] Message 'Synth 8-3331' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-6851] RAM (cpu/dmem_i/mem_reg) has partial Byte Wide Write Enable pattern, however no output register found in fanout of RAM. Recommended to use supported Byte Wide Write Enable template. 
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[8]' (FDCE) to 'cpu/ifid_reg/instr_reg[31]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[9]' (FDCE) to 'cpu/ifid_reg/instr_reg[31]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[10]' (FDCE) to 'cpu/ifid_reg/instr_reg[31]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[11]' (FDCE) to 'cpu/ifid_reg/instr_reg[31]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[29]' (FDCE) to 'cpu/ifid_reg/instr_reg[31]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[7]' (FDCE) to 'cpu/ifid_reg/instr_reg[31]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[25]' (FDCE) to 'cpu/ifid_reg/instr_reg[31]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[26]' (FDCE) to 'cpu/ifid_reg/instr_reg[31]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[27]' (FDCE) to 'cpu/ifid_reg/instr_reg[31]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[28]' (FDCE) to 'cpu/ifid_reg/instr_reg[31]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[31]' (FDCE) to 'cpu/ifid_reg/instr_reg[30]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[30]' (FDCE) to 'cpu/ifid_reg/instr_reg[24]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[12]' (FDCE) to 'cpu/ifid_reg/instr_reg[24]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[13]' (FDCE) to 'cpu/ifid_reg/instr_reg[24]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[14]' (FDCE) to 'cpu/ifid_reg/instr_reg[24]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[5]' (FDCE) to 'cpu/ifid_reg/instr_reg[24]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[18]' (FDCE) to 'cpu/ifid_reg/instr_reg[24]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[19]' (FDCE) to 'cpu/ifid_reg/instr_reg[24]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[15]' (FDCE) to 'cpu/ifid_reg/instr_reg[24]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[16]' (FDCE) to 'cpu/ifid_reg/instr_reg[24]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[17]' (FDCE) to 'cpu/ifid_reg/instr_reg[24]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[23]' (FDCE) to 'cpu/ifid_reg/instr_reg[24]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rd_reg[3]' (FDC) to 'cpu/idex_reg/rs2_reg[3]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/funct7_reg[3]' (FDC) to 'cpu/idex_reg/rs2_reg[3]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/funct7_reg[2]' (FDC) to 'cpu/idex_reg/rs2_reg[3]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/funct7_reg[1]' (FDC) to 'cpu/idex_reg/rs2_reg[3]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/funct7_reg[0]' (FDC) to 'cpu/idex_reg/rs2_reg[3]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/funct7_reg[4]' (FDC) to 'cpu/idex_reg/rs2_reg[3]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/funct7_reg[6]' (FDC) to 'cpu/idex_reg/rs2_reg[3]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[24]' (FDCE) to 'cpu/ifid_reg/instr_reg[22]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rd_reg[4]' (FDC) to 'cpu/idex_reg/rs2_reg[4]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[20]' (FDCE) to 'cpu/ifid_reg/instr_reg[22]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rd_reg[0]' (FDC) to 'cpu/idex_reg/rs2_reg[0]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[21]' (FDCE) to 'cpu/ifid_reg/instr_reg[22]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rd_reg[1]' (FDC) to 'cpu/idex_reg/rs2_reg[1]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[22]' (FDCE) to 'cpu/ifid_reg/instr_reg[6]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rd_reg[2]' (FDC) to 'cpu/idex_reg/rs2_reg[2]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[2]' (FDCE) to 'cpu/ifid_reg/instr_reg[6]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[6]' (FDCE) to 'cpu/ifid_reg/instr_reg[4]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[3]' (FDCE) to 'cpu/ifid_reg/instr_reg[4]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[4]' (FDCE) to 'cpu/ifid_reg/instr_reg[1]'
+INFO: [Synth 8-3886] merging instance 'cpu/ifid_reg/instr_reg[1]' (FDCE) to 'cpu/ifid_reg/instr_reg[0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\cpu/ifid_reg/instr_reg[0] )
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rs1_reg[3]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rs1_reg[4]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rs1_reg[0]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rs1_reg[1]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rs1_reg[2]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rs2_reg[3]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rs2_reg[4]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/exmem_reg/rd_reg[4]' (FDC) to 'cpu/exmem_reg/rd_reg[3]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rs2_reg[0]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/exmem_reg/rd_reg[0]' (FDC) to 'cpu/exmem_reg/rd_reg[3]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rs2_reg[1]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/exmem_reg/rd_reg[1]' (FDC) to 'cpu/exmem_reg/rd_reg[3]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/rs2_reg[2]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/exmem_reg/rd_reg[2]' (FDC) to 'cpu/exmem_reg/rd_reg[3]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/opcode_reg[3]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/opcode_reg[6]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/opcode_reg[2]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/opcode_reg[5]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/opcode_reg[4]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/opcode_reg[1]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/opcode_reg[0]' (FDC) to 'cpu/idex_reg/funct7_reg[5]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/funct7_reg[5]' (FDC) to 'cpu/idex_reg/funct3_reg[0]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/funct3_reg[0]' (FDC) to 'cpu/idex_reg/funct3_reg[1]'
+INFO: [Synth 8-3886] merging instance 'cpu/idex_reg/funct3_reg[1]' (FDC) to 'cpu/idex_reg/funct3_reg[2]'
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:19 ; elapsed = 00:00:18 . Memory (MB): peak = 1020.523 ; gain = 635.730
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:19 ; elapsed = 00:00:18 . Memory (MB): peak = 1033.574 ; gain = 648.781
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:19 ; elapsed = 00:00:18 . Memory (MB): peak = 1033.574 ; gain = 648.781
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:20 ; elapsed = 00:00:19 . Memory (MB): peak = 1033.586 ; gain = 648.793
+---------------------------------------------------------------------------------
+
+Report Check Netlist: 
++------+------------------+-------+---------+-------+------------------+
+|      |Item              |Errors |Warnings |Status |Description       |
++------+------------------+-------+---------+-------+------------------+
+|1     |multi_driven_nets |      0|        0|Passed |Multi driven nets |
++------+------------------+-------+---------+-------+------------------+
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:20 ; elapsed = 00:00:19 . Memory (MB): peak = 1033.586 ; gain = 648.793
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:20 ; elapsed = 00:00:19 . Memory (MB): peak = 1033.586 ; gain = 648.793
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:20 ; elapsed = 00:00:19 . Memory (MB): peak = 1033.586 ; gain = 648.793
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:20 ; elapsed = 00:00:19 . Memory (MB): peak = 1033.586 ; gain = 648.793
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:20 ; elapsed = 00:00:19 . Memory (MB): peak = 1033.586 ; gain = 648.793
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-----+------+
+|      |Cell |Count |
++------+-----+------+
+|1     |OBUF |     8|
++------+-----+------+
+
+Report Instance Areas: 
++------+---------+-------+------+
+|      |Instance |Module |Cells |
++------+---------+-------+------+
+|1     |top      |       |     8|
++------+---------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:20 ; elapsed = 00:00:19 . Memory (MB): peak = 1033.586 ; gain = 648.793
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 1 critical warnings and 1214 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:20 ; elapsed = 00:00:19 . Memory (MB): peak = 1033.586 ; gain = 648.793
+Synthesis Optimization Complete : Time (s): cpu = 00:00:20 ; elapsed = 00:00:19 . Memory (MB): peak = 1033.586 ; gain = 648.793
+INFO: [Project 1-571] Translating synthesized netlist
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 1119.508 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+INFO: [Common 17-83] Releasing license: Synthesis
+137 Infos, 200 Warnings, 1 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:23 ; elapsed = 00:00:24 . Memory (MB): peak = 1119.508 ; gain = 759.551
+# report_utilization -file "$proj_dir/sume_synth_utilization.rpt"
+# puts "=== SUME SYNTH CHECK OK ==="
+=== SUME SYNTH CHECK OK ===
+INFO: [Common 17-206] Exiting Vivado at Fri Oct 16 16:17:34 2026...
