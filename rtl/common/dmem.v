@@ -1,16 +1,16 @@
 `timescale 1ns/1ps
 // ============================================================================
-// dmem.v - Êı¾İÄÚ´æ£¨1024 x 32bit = 4KB£¬×Ö½ÚÑ°Ö·£©
-// Ö§³Ö lb/lh/lw/lbu/lhu/sb/sh/sw£»×éºÏ¶Á¡¢Ê±ÖÓÑØĞ´
-// ¿ÉÑ¡ $readmemh("data.hex") ³õÊ¼»¯£¨ÓÉºê DMEM_INIT ¿ØÖÆ£©
+// dmem.v - ï¿½ï¿½ï¿½ï¿½ï¿½Ú´æ£¨1024 x 32bit = 4KBï¿½ï¿½ï¿½Ö½ï¿½Ñ°Ö·ï¿½ï¿½
+// Ö§ï¿½ï¿½ lb/lh/lw/lbu/lhu/sb/sh/swï¿½ï¿½ï¿½ï¿½Ï¶ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ğ´
+// ï¿½ï¿½Ñ¡ $readmemh("data.hex") ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½Éºï¿½ DMEM_INIT ï¿½ï¿½ï¿½Æ£ï¿½
 // ============================================================================
 module dmem #(parameter DEPTH = 1024) (
     input             clk,
     input             we,       // MemWrite
-    input  [2:0]      funct3,   // ·Ã´æ¿í¶È/·ûºÅ
-    input  [31:0]     a,        // µØÖ·
-    input  [31:0]     wd,       // Ğ´Êı¾İ
-    output reg [31:0] rd        // ¶ÁÊı¾İ
+    input  [2:0]      funct3,   // ï¿½Ã´ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½
+    input  [31:0]     a,        // ï¿½ï¿½Ö·
+    input  [31:0]     wd,       // Ğ´ï¿½ï¿½ï¿½ï¿½
+    output reg [31:0] rd        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 );
     reg [31:0] mem [0:DEPTH-1];
     integer i;
@@ -31,7 +31,7 @@ module dmem #(parameter DEPTH = 1024) (
     wire [31:0] addr = a[31:2];
     wire [1:0]  off  = a[1:0];
 
-    // ---- ×éºÏ¶Á ----
+    // ---- ç»„åˆè¯»ï¼ˆæ”¯æŒéå¯¹é½ï¼šlh/lhu è·¨ 16 ä½è¾¹ç•Œã€lw è·¨å­—ï¼‰----
     always @(*) begin
         case (funct3)
             3'b000: begin  // lb
@@ -42,13 +42,22 @@ module dmem #(parameter DEPTH = 1024) (
                     default: rd = {{24{mem[addr][31]}}, mem[addr][31:24]};
                 endcase
             end
-            3'b001: begin  // lh
-                case (off[1])
-                    1'b0: rd = {{16{mem[addr][15]}}, mem[addr][15:0]};
-                    default: rd = {{16{mem[addr][31]}}, mem[addr][31:16]};
+            3'b001: begin  // lhï¼ˆå«éå¯¹é½ï¼‰
+                case (off)
+                    2'b00:   rd = {{16{mem[addr][15]}},  mem[addr][15:0]};
+                    2'b01:   rd = {{16{mem[addr][23]}},  mem[addr][23:8]};
+                    2'b10:   rd = {{16{mem[addr][31]}},  mem[addr][31:16]};
+                    default: rd = {{16{mem[addr + 1][7]}}, mem[addr + 1][7:0], mem[addr][31:24]};
                 endcase
             end
-            3'b010: rd = mem[addr];                    // lw
+            3'b010: begin  // lwï¼ˆæ”¯æŒéå¯¹é½ï¼Œè·¨å­—æ‹¼æ¥ï¼‰
+                case (off)
+                    2'b00:   rd = mem[addr];
+                    2'b01:   rd = {mem[addr + 1][7:0],  mem[addr][31:8]};
+                    2'b10:   rd = {mem[addr + 1][15:0], mem[addr][31:16]};
+                    default: rd = {mem[addr + 1][23:0], mem[addr][31:24]};
+                endcase
+            end
             3'b100: begin  // lbu
                 case (off)
                     2'b00:   rd = {24'b0, mem[addr][7:0]};
@@ -57,17 +66,19 @@ module dmem #(parameter DEPTH = 1024) (
                     default: rd = {24'b0, mem[addr][31:24]};
                 endcase
             end
-            3'b101: begin  // lhu
-                case (off[1])
-                    1'b0: rd = {16'b0, mem[addr][15:0]};
-                    default: rd = {16'b0, mem[addr][31:16]};
+            3'b101: begin  // lhuï¼ˆå«éå¯¹é½ï¼‰
+                case (off)
+                    2'b00:   rd = {16'b0, mem[addr][15:0]};
+                    2'b01:   rd = {16'b0, mem[addr][23:8]};
+                    2'b10:   rd = {16'b0, mem[addr][31:16]};
+                    default: rd = {16'b0, mem[addr + 1][7:0], mem[addr][31:24]};
                 endcase
             end
             default: rd = mem[addr];
         endcase
     end
 
-    // ---- Í¬²½Ğ´ ----
+    // ---- åŒæ­¥å†™ï¼ˆæ”¯æŒéå¯¹é½ sh/sw è·¨å­—ï¼‰----
     always @(posedge clk) begin
         if (we) begin
             case (funct3)
@@ -79,13 +90,40 @@ module dmem #(parameter DEPTH = 1024) (
                         default: mem[addr][31:24] <= wd[7:0];
                     endcase
                 end
-                3'b001: begin  // sh
-                    case (off[1])
-                        1'b0: mem[addr][15:0]  <= wd[15:0];
-                        default: mem[addr][31:16] <= wd[15:0];
+                3'b001: begin  // shï¼ˆå«éå¯¹é½ï¼‰
+                    case (off)
+                        2'b00: begin
+                            mem[addr][15:0]  <= wd[15:0];
+                        end
+                        2'b01: begin
+                            mem[addr][23:8]  <= wd[15:0];
+                        end
+                        2'b10: begin
+                            mem[addr][31:16] <= wd[15:0];
+                        end
+                        default: begin
+                            mem[addr][31:24] <= wd[7:0];
+                            mem[addr + 1][7:0] <= wd[15:8];
+                        end
                     endcase
                 end
-                3'b010: mem[addr] <= wd;             // sw
+                3'b010: begin  // swï¼ˆæ”¯æŒéå¯¹é½ï¼Œè·¨å­—å†™å…¥ï¼‰
+                    case (off)
+                        2'b00:   mem[addr] <= wd;
+                        2'b01: begin
+                            mem[addr][31:8]   <= wd[23:0];
+                            mem[addr + 1][7:0] <= wd[31:24];
+                        end
+                        2'b10: begin
+                            mem[addr][31:16]  <= wd[15:0];
+                            mem[addr + 1][15:0] <= wd[31:16];
+                        end
+                        default: begin
+                            mem[addr][31:24]  <= wd[7:0];
+                            mem[addr + 1][23:0] <= wd[31:8];
+                        end
+                    endcase
+                end
                 default: ;
             endcase
         end

@@ -35,7 +35,9 @@ $tbFile = Join-Path $root ("sim\tb\" + $TB + ".v")
 if (-not (Test-Path $tbFile)) { Write-Host "ERROR: TB not found: $tbFile"; exit 1 }
 
 Write-Host "== xvlog =="
-& "$vivado\xvlog.bat" -work work $rtlFiles $tbFile 2>&1 | Out-Host
+$defineArgs = @()
+if ($DATA) { $defineArgs += "-d"; $defineArgs += "DMEM_INIT" }
+& "$vivado\xvlog.bat" -work work $defineArgs $rtlFiles $tbFile 2>&1 | Out-Host
 if ($LASTEXITCODE -ne 0) { Write-Host "COMPILE FAILED"; exit 1 }
 
 # ---- 2. 例化 ----

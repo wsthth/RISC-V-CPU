@@ -1,22 +1,29 @@
 `timescale 1ns/1ps
 // ============================================================================
-// imem.v - Ö¸ÁîÄÚ´æ£¨1024 x 32bit = 4KB£©
-// ×éºÏ¶Á£»initial Í¨¹ý $readmemh ¼ÓÔØ program.hex£¨·ÂÕæ½Å±¾¸ºÔð¸´ÖÆµ½ÔËÐÐÄ¿Â¼£©
-// ×¢£º4KB ½ÏÐ¡£¬×ÛºÏÊ±¿ÉÍÆ¶ÏÎª·Ö²¼Ê½ RAM£¨Òì²½¶Á£©£¬Ê±ÐòÓàÁ¿³ä×ã
+// imem.v - Ö¸ï¿½ï¿½ï¿½Ú´æ£¨1024 x 32bit = 4KBï¿½ï¿½
+// ï¿½ï¿½Ï¶ï¿½ï¿½ï¿½initial Í¨ï¿½ï¿½ $readmemh ï¿½ï¿½ï¿½ï¿½ program.hexï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½ï¿½
+// ×¢ï¿½ï¿½4KB ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½Ûºï¿½Ê±ï¿½ï¿½ï¿½Æ¶ï¿½Îªï¿½Ö²ï¿½Ê½ RAMï¿½ï¿½ï¿½ì²½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 // ============================================================================
 module imem #(parameter DEPTH = 1024) (
     input  [31:0] a,
     output wire [31:0] rd
 );
     reg [31:0] mem [0:DEPTH-1];
-    // ³ÌÐò¼ÓÔØ£º
-    //   ·ÂÕæ£ºrun_sim.ps1 ¸´ÖÆ hex ÎªÔËÐÐÄ¿Â¼ÏÂµÄ program.hex
-    //   ×ÛºÏ£ºVivado ÓÉ TCL Í¨¹ý -verilog_define PROGRAM_HEX=<¾ø¶ÔÂ·¾¶> Ö¸¶¨£»
-    //         Î´¶¨ÒåÊ±»ØÍË program.hex£¨¹¤³ÌÄ¿Â¼ÄÚ£©
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø£ï¿½
+    //   ï¿½ï¿½ï¿½æ£ºrun_sim.ps1 ï¿½ï¿½ï¿½ï¿½ hex Îªï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½Âµï¿½ program.hex
+    //   ï¿½ÛºÏ£ï¿½Vivado ï¿½ï¿½ TCL Í¨ï¿½ï¿½ -verilog_define PROGRAM_HEX=<ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½> Ö¸ï¿½ï¿½ï¿½ï¿½
+    //         Î´ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ program.hexï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½Ú£ï¿½
 `ifdef PROGRAM_HEX
-    initial $readmemh(`"PROGRAM_HEX`", mem);
+    initial begin
+        $display("imem: loading PROGRAM_HEX = %0s", `PROGRAM_HEX);
+        $readmemh(`PROGRAM_HEX, mem);
+    end
 `else
-    initial $readmemh("program.hex", mem);
+    initial begin
+        $display("imem: loading program.hex (relative CWD)");
+        $readmemh("program.hex", mem);
+    end
 `endif
+    initial $display("imem[0]=%08h imem[1]=%08h", mem[0], mem[1]);
     assign rd = mem[a[31:2]];
 endmodule

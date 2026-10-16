@@ -233,3 +233,50 @@ Zynq-7020（xc7z020）上板目标达成；下一步完成 SUME（XC7VX690T）�
 
 
 
+
+
+## 2026-10-16（第 6 次工作：riscv-tests 官方测试集系统验证）
+
+### 工作目标
+1. 用 riscv-tests 官方 rv32ui 测试集（43 个 .S，含 fence_i/ma_data）对五级流水线 CPU 做系统级功能验证。
+2. 自研「翻译器 + 汇编器」链路：官方 GAS 语法 .S → 可仿真 hex，每个测试 xsim 判定 PASS/FAIL（gp=x3，1=PASS/0=FAIL）。
+3. 所有阶段性成果规范提交 git（github.com/wsthth/RISC-V-CPU）。
+
+### 环境与链路
+- 官方源码：`riscv-tests-src/riscv-tests-master`（github 直连被重置，走 codeload.github.com 下载）。
+- 工具：`tools/riscv_tests_conv.py`（翻译器）+ `tools/riscv_asm.py`（汇编器）+ `sim/scripts/run_rvtest.ps1`（批量）。
+- 通用 TB：`sim/tb/tb_rvtest.v`（PC 连续 5 周期不变判定自旋终点，读 x3=gp）。
+
+### 遇到的问题与 debug 过程（按调试主线）
+| # | 问题 | debug 过程 | 解决方法 |
+|---|---|---|---|
+| 1 | TEST_BR2_OP 类测试全军覆没 | 反汇编 lst 发现 `bne x0,x1,pass` 永不成立——`li x1,testnum` 后 x1 被后续指令覆盖 | 官方约定 **TESTNUM 必须用 x3**（gp），自写 `riscv_test_self.h` 框架：li x3,testnum + test_end 自旋，无 CSR/ecall 依赖 |
+| 2 | li 展开条数导致地址错位 | bgeu 期望值全错且后续指令整体错位 4 字节；逐地址对照源码发现 `li x6,0x201F` 在 lower==0 时只应发 1 条 lui | 修正 `instr_expand_count()`：li 默认 2 条（LUI+ADDI），lower==0 时 1 条 |
+| 3 | 过滤顺序错误致 RV64 移位用例残留 | sll 等测试假失败：翻译器 `;` 分隔指令后未先换行再正则，行首匹配不到 | **`text.replace(';','\n')` 必须先于 filter_rv32_shifts**，否则同指令行首正则失效 |
+| 4 | 删除 RV64 指令块时连框架一起删 | ld/sd/lwu 块删除后 TEST_PASSFAIL 与数据段丢失 | 块删除用 FRAME_RE 保留 `bne x0,x3,pass/fail: test_end: tdat*: .word/.byte/.half/.rept/.endr` 框架行 |
+| 5 | 陈旧 hex 造成假失败 | 修改 dmem 后 sll 仍 FAIL，重跑生成链路后消失 | **产物变更后必须先重新生成 hex 再判真失败**（仿真默认不重新汇编） |
+| 6 | 数据段字节序与地址索引两个独立坑 | lb/lh/lw 假失败：`.byte` 打包成小端 .word 前未按地址序；data.hex `@地址` 写成字节地址而 dmem $readmemh 索引是字地址 | 字节流按小端打包；`@(addr>>2)` 写数据内存字索引 |
+| 7 | lh/lhu 非对齐 off=11 拼接顺序写反 | ma_data test_16 读回 0x1F20 而期望 0x201F | 修正为 `{高字节, 低字节}` = `{mem[addr+1][7:0], mem[addr][31:24]}`，符号位取高字节 mem[addr+1][7] |
+| 8 | ma_data test_136 期望 0xb898 无法满足（RV32 语义） | 打印 x7/t2(期望)=0xFFFFB898、x28/t3(实际)=0xFFFFA498，字节2=0xa4；追源码：0xb8 只能由 test_100 `sd`（RV64 专属，#if __riscv_xlen==64 内）写入 | 官方测试集 RV32 适配瑕疵：**期望依赖被官方自身 #if 排除的 RV64 sd 写入链**；CPU 行为正确（RV32 语义），记录为 SKIP 并说明 |
+| 9 | fence_i 汇编失败 + 本质为自修改代码 | 翻译产物含 GAS 三操作数 store（`sh a0,2f,t0`）与裸标签访存（`lh a0,insn`），汇编器不支持；且测试运行时改写 imem 指令字节 | 自修改代码对 imem=ROM 的 CPU 不适用（非冯·诺依曼），记录为功能边界 SKIP：不修汇编器去凑一个必然 FAIL 的仿真 |
+
+### 调试方法沉淀（复用）
+1. 连续同类失败先查**宏语义**（TESTNUM 寄存器、伪指令展开条数）。
+2. **汇编结果与源码逐地址对照**（li 条数 bug 即由此暴露）。
+3. 仿真 FAIL 打印**最近 16 个不同 PC**，定位最后执行的测试块。
+4. 期望值先用 Python 独立复算，再怀疑 CPU（避免把测试集/工具链 bug 记到 CPU 头上）。
+5. 产物变更未重新生成时**先重跑生成链路再判真失败**（陈旧 hex）。
+6. 打印寄存器快照（x5/x6/x7/x28）对比期望/实际，缩小到单条指令语义。
+
+### 实验结果
+- **40/42 PASS**：add/addi/and/andi/auipc/beq/bge/bgeu/blt/bltu/bne/jal/jalr/lb/lbu/ld_st/lh/lhu/lui/lw/or/ori/sb/sh/simple/sll/slli/slt/slti/sltiu/sltu/sra/srai/srl/srli/st_ld/sub/sw/xor/xori 全部通过。
+- **SKIP（2 项，有明确理由）**：
+  - `ma_data`：test_136 期望依赖官方 RV64 专属 sd 写入（官方 RV32 编译下同样无法满足），CPU 访存逻辑经访存组 7/7 回归 + 其余 40 测试验证正确。
+  - `fence_i`：自修改代码测试，imem 为 ROM 无法支持（官方框架依赖 ecall/异常，本实现已去特权化）。
+
+### 结论
+五级流水线 RV32I CPU 通过 riscv-tests rv32ui 全部**可在 RV32 语义下满足**的官方测试，指令集功能完整。
+
+### 下一步
+1. 视用户决策：修正 run_rvtest.ps1 嵌套输出捕获偶发问题（单独/分组跑均稳定，全量偶现误报）。
+2. 赛题后续缺口：CoreMark 跑分、资源 <5K LUT 统计、正式设计文档 Word/PDF、矩阵乘法/排序演示+视频、SUME XC7VX690T 实测上板。

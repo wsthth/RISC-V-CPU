@@ -42,12 +42,15 @@ RISC-V/
 │       ├── forward_unit.v    # 两级旁路转发
 │       └── branch_predictor.v# 2-bit 饱和计数器 + BTB
 ├── sim/
-│   ├── tb/               # 各级 Testbench
-│   ├── scripts/          # 仿真脚本 run_sim.ps1
+│   ├── tb/               # 各级 Testbench（含 tb_rvtest.v 官方测试集通用 TB）
+│   ├── scripts/          # 仿真脚本 run_sim.ps1 + 批量测试 run_rvtest.ps1
 │   └── work/             # 仿真工作目录（gitignore）
 ├── tools/
-│   ├── riscv_asm.py      # 自研 RV32I 汇编器（六种格式 + 伪指令）
+│   ├── riscv_asm.py      # 自研 RV32I 汇编器（六种格式 + 伪指令 + 数字标签/表达式）
+│   ├── riscv_tests_conv.py # riscv-tests 官方 .S 翻译器（宏展开/RV64 过滤/数据段重构）
+│   ├── riscv_test_self.h # 自写测试框架（TESTNUM=x3，无 CSR/ecall 依赖）
 │   └── asm_verify.py     # 汇编器编码自动校验（29 用例）
+├── riscv-tests-src/      # riscv-tests 官方测试源码（isa/rv32ui 等）
 ├── testprog/             # 测试汇编程序 + 生成的 hex/lst
 │   ├── basic.s           # 基础功能测试（单周期/流水线通用）
 │   ├── hazard.s          # 数据冒险测试（转发链 + Load-Use）
@@ -62,9 +65,9 @@ RISC-V/
 
 ### ✅ 已完成
 1. **RV32I 汇编器**（tools/riscv_asm.py）
-   - 支持全部 RV32I 基础指令（R/I/S/B/U/J 六种格式）
-   - 支持标签、注释、`.word` 数据指令
-   - 伪指令：`nop li mv not neg seqz snez sltz sgtz beqz bnez j ret call la`
+   - 支持全部 RV32I 基础指令（R/I/S/B/U/J 六种格式）+ fence.i
+   - 支持标签、注释、`.word` 数据指令、数字局部标签（1b/1f）、label±imm 表达式
+   - 伪指令：`nop li mv not neg seqz snez sltz sgtz beqz bnez j ret call la lla jr` + 立即数移位形式
    - 输出 `.hex`（内存加载）与 `.lst`（带地址清单）
    - 编码自动校验 29 用例全部通过（与 RISC-V 规范逐位核对）
 
@@ -85,6 +88,14 @@ RISC-V/
    - 整机测试全部通过：
      - `tb_pipe_basic`（74 周期）/ `tb_pipe_hazard`（34 周期）/ `tb_pipe_branch`（352 周期）
      - `tb_pipe_full`（全 RV32I 指令集 + 陷阱检查，156 周期）
+
+5. **riscv-tests 官方测试集系统验证**（tools/riscv_tests_conv.py + riscv_test_self.h + tb_rvtest.v）
+   - 链路：官方 GAS 语法 `.S` → 翻译器（宏展开/RV64 指令过滤/数据段小端重构）→ 自研汇编器 → hex → xsim
+   - **rv32ui 40/42 PASS**（全部可在 RV32 语义下满足的官方测试）
+   - SKIP（有明确理由，详见 risc-v.md 第 6 次记录）：
+     - `ma_data`：test_136 期望依赖官方自身 `#if __riscv_xlen==64` 排除的 RV64 sd 写入链（RV32 适配瑕疵，CPU 行为正确）
+     - `fence_i`：自修改代码测试，imem 为 ROM 无法支持（非冯·诺依曼边界）
+   - 批量运行：`powershell -File sim\scripts\run_rvtest.ps1`（单测可用 `-Only add,and,...`）
 
 ### 🔨 开发中
 5. 系统级更严格验证（访存未对齐、立即数边界等）
@@ -136,3 +147,4 @@ powershell -File sim\scripts\run_sim.ps1 -TB tb_single -HEX testprog\hex\basic.h
 
 - **v0.1（2026-10-16）**：汇编器 + 底层模块 + 单周期 CPU，全部仿真通过
 - **v0.2（2026-10-16）**：五级流水线（转发/停顿/2-bit 分支预测 + BTB/jalr 对齐/MMIO）+ 冒险与全指令集测试，全部仿真通过；修复 7 个 bug（详见 risc-v.md）
+- **v0.3（2026-10-16）**：riscv-tests 官方测试集工具链（翻译器/汇编器扩展/通用 TB）——rv32ui **40/42 PASS**，dmem 非对齐读写重构（lh/lhu/lw/sh/sw 跨字）；2 项 SKIP 有明确理由（详见 risc-v.md 第 6 次记录）

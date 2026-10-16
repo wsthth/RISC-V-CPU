@@ -3,11 +3,9 @@ sim/work/
 *.vcd
 *.wdb
 xsim.dir/
-
 # Python
 __pycache__/
 *.pyc
-
 # Vivado 工程产物（目录级：整个工程/日志/中间文件都不入库）
 fpga/vivado_*/
 fpga/scripts/*.log
@@ -17,3 +15,5 @@ fpga/scripts/program.hex
 *.ltx
 *.rpt
 *.jou
+# riscv-tests generated outputs
+testprog/rvtest/
