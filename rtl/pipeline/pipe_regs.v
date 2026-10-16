@@ -1,21 +1,22 @@
 `timescale 1ns/1ps
 // ============================================================================
-// pipe_regs.v - Îå¼¶Á÷Ë®Ïß¼Ä´æÆ÷×é£¨IF/ID¡¢ID/EX¡¢EX/MEM¡¢MEM/WB£©
-// Ã¿¸ö¼Ä´æÆ÷´ø 1-bit valid£º
-//   - flush Ê± valid ÇåÁã£¨IF/ID¡¢ID/EX ÓÃÓÚ·ÖÖ§³åË¢ / load-use bubble£©
-//   - enable Ê±×°ÔØ£¨IF/ID ÓÃÓÚ stall ¶³½á£©
-//   - Êý¾ÝÔÚ flush Ê±ÕÕ³£×°ÔØµ« valid=0£¬ÓÉ valid ÃÅ¿ØÏÂÓÎÖ´ÐÐ
+// pipe_regs.v - ï¿½å¼¶ï¿½ï¿½Ë®ï¿½ß¼Ä´ï¿½ï¿½ï¿½ï¿½é£¨IF/IDï¿½ï¿½ID/EXï¿½ï¿½EX/MEMï¿½ï¿½MEM/WBï¿½ï¿½
+// Ã¿ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½ 1-bit validï¿½ï¿½
+//   - flush Ê± valid ï¿½ï¿½ï¿½ã£¨IF/IDï¿½ï¿½ID/EX ï¿½ï¿½ï¿½Ú·ï¿½Ö§ï¿½ï¿½Ë¢ / load-use bubbleï¿½ï¿½
+//   - enable Ê±×°ï¿½Ø£ï¿½IF/ID ï¿½ï¿½ï¿½ï¿½ stall ï¿½ï¿½ï¿½á£©
+//   - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ flush Ê±ï¿½Õ³ï¿½×°ï¿½Øµï¿½ valid=0ï¿½ï¿½ï¿½ï¿½ valid ï¿½Å¿ï¿½ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ï¿½
 // ============================================================================
 
 // ---------------- IF/ID ----------------
 module reg_ifid (
     input             clk,
     input             reset,
-    input             enable,   // 0=¶³½á£¨load-use stall£©
-    input             flush,    // 1=³åË¢£¨·ÖÖ§ mispredict£©
+    input             enable,   // 0=ï¿½ï¿½ï¿½á£¨load-use stallï¿½ï¿½
+    input             flush,    // 1=ï¿½ï¿½Ë¢ï¿½ï¿½ï¿½ï¿½Ö§ mispredictï¿½ï¿½
     input  [31:0]     pc_in,
     input  [31:0]     instr_in,
-    input             pred_in,  // ±¾ÌõÖ¸ÁîÈ¡Ö¸Ê±µÄ·ÖÖ§Ô¤²â
+    input             pred_in,  // ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½È¡Ö¸Ê±ï¿½Ä·ï¿½Ö§Ô¤ï¿½ï¿½
+    input             valid_in, // IF2 ï¿½Ä¿ï¿½ï¿½ï¿½Î»ï¿½ï¿½mispredict ï¿½ï¿½ï¿½ IF2 ï¿½ï¿½Ð§ï¿½ï¿½
     output reg [31:0] pc,
     output reg [31:0] instr,
     output reg        pred,
@@ -29,7 +30,7 @@ module reg_ifid (
             pc <= pc_in; instr <= instr_in; pred <= pred_in; valid <= 1'b0;
         end
         else if (enable) begin
-            pc <= pc_in; instr <= instr_in; pred <= pred_in; valid <= 1'b1;
+            pc <= pc_in; instr <= instr_in; pred <= pred_in; valid <= valid_in;
         end
     end
 endmodule
@@ -38,13 +39,13 @@ endmodule
 module reg_idex (
     input             clk,
     input             reset,
-    input             flush,    // 1=³åË¢/bubble£¨load-use »ò·ÖÖ§ mispredict£©
-    // ¿ØÖÆÐÅºÅ£¨À´×ÔÖ÷ÒëÂëÆ÷£©
+    input             flush,    // 1=ï¿½ï¿½Ë¢/bubbleï¿½ï¿½load-use ï¿½ï¿½ï¿½Ö§ mispredictï¿½ï¿½
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     input             regwrite_d, alusrca_d, alusrcb_d, memwrite_d, branch_d, jump_d,
     input  [1:0]      resultsrc_d,
     input  [1:0]      aluop_d,
     input             jalr_d,
-    // Êý¾Ý
+    // ï¿½ï¿½ï¿½ï¿½
     input  [31:0]     pc_d,
     input  [31:0]     rd1_d, rd2_d, immext_d,
     input  [4:0]      rs1_d, rs2_d, rd_d,
@@ -52,7 +53,7 @@ module reg_idex (
     input  [6:0]      funct7_d,
     input  [6:0]      opcode_d,
     input             pred_d,
-    // Êä³ö
+    // ï¿½ï¿½ï¿½
     output reg        regwrite, alusrca, alusrcb, memwrite, branch, jump,
     output reg [1:0]  resultsrc,
     output reg [1:0]  aluop,
@@ -77,7 +78,7 @@ module reg_idex (
             funct3 <= 3'b0; funct7 <= 7'b0; opcode <= 7'b0; pred <= 1'b0;
         end
         else if (flush) begin
-            // ³åË¢£ºvalid=0 ÇÒÇå¿ÕÈ«²¿¿ØÖÆÐÅºÅ£¨±ÜÃâ²ÐÁôÖ¸ÁîÔÚ EX/MEM/WB Ôì³ÉÐ´»Ø£©
+            // ï¿½ï¿½Ë¢ï¿½ï¿½valid=0 ï¿½ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ EX/MEM/WB ï¿½ï¿½ï¿½Ð´ï¿½Ø£ï¿½
             valid <= 1'b0;
             regwrite <= 1'b0; alusrca <= 1'b0; alusrcb <= 1'b0;
             memwrite <= 1'b0; branch <= 1'b0;   jump <= 1'b0;
@@ -102,15 +103,15 @@ endmodule
 module reg_exmem (
     input             clk,
     input             reset,
-    // ¿ØÖÆ
+    // ï¿½ï¿½ï¿½ï¿½
     input             regwrite_e, memwrite_e,
     input  [1:0]      resultsrc_e,
     input  [2:0]      funct3_e,
     input             valid_e,
-    // Êý¾Ý
+    // ï¿½ï¿½ï¿½ï¿½
     input  [31:0]     pcplus4_e, alu_result_e, writedata_e,
     input  [4:0]      rd_e,
-    // Êä³ö
+    // ï¿½ï¿½ï¿½
     output reg        regwrite, memwrite,
     output reg [1:0]  resultsrc,
     output reg [2:0]  funct3,
@@ -137,7 +138,9 @@ module reg_exmem (
 endmodule
 
 // ---------------- MEM/WB ----------------
-module reg_memwb (
+// LOCK_READDATA=0ï¼ˆBRAM ç‰ˆæµæ°´çº¿ï¼‰ï¼šreaddata ä¸é”å­˜ï¼Œç›´é€š dmem è¾“å‡º
+// ï¼ˆdmem åŒæ­¥è¯»åœ¨ MEM/WB è¾¹æ²¿æ›´æ–°ï¼ŒWB å‘¨æœŸå†…ç¨³å®šï¼Œregfile åœ¨ WB è¾¹æ²¿å†™å›žï¼‰
+module reg_memwb #(parameter LOCK_READDATA = 1) (
     input             clk,
     input             reset,
     input             regwrite_m,
@@ -147,21 +150,33 @@ module reg_memwb (
     input             valid_m,
     output reg        regwrite,
     output reg [1:0]  resultsrc,
-    output reg [31:0] readdata, alu_result, pcplus4,
+    output wire [31:0] readdata,
+    output reg [31:0] alu_result, pcplus4,
     output reg [4:0]  rd,
     output reg        valid
 );
+    reg [31:0] readdata_r;
+    generate
+        if (LOCK_READDATA) begin : lock_rd
+            always @(posedge clk or posedge reset) begin
+                if (reset) readdata_r <= 32'b0;
+                else       readdata_r <= readdata_m;
+            end
+        end
+    endgenerate
+    assign readdata = LOCK_READDATA ? readdata_r : readdata_m;
+
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             valid <= 1'b0;
             regwrite <= 1'b0; resultsrc <= 2'b00;
-            readdata <= 32'b0; alu_result <= 32'b0;
+            alu_result <= 32'b0;
             pcplus4 <= 32'b0; rd <= 5'b0;
         end
         else begin
             valid <= valid_m;
             regwrite <= regwrite_m; resultsrc <= resultsrc_m;
-            readdata <= readdata_m; alu_result <= alu_result_m;
+            alu_result <= alu_result_m;
             pcplus4 <= pcplus4_m; rd <= rd_m;
         end
     end

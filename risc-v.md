@@ -280,3 +280,50 @@ Zynq-7020（xc7z020）上板目标达成；下一步完成 SUME（XC7VX690T）�
 ### 下一步
 1. 视用户决策：修正 run_rvtest.ps1 嵌套输出捕获偶发问题（单独/分组跑均稳定，全量偶现误报）。
 2. 赛题后续缺口：CoreMark 跑分、资源 <5K LUT 统计、正式设计文档 Word/PDF、矩阵乘法/排序演示+视频、SUME XC7VX690T 实测上板。
+
+---
+
+## 2026-10-16（第 7 次工作：内存 BRAM 化 + 同步读改造）
+
+### 工作目标
+1. imem/dmem 参数化扩容（DEPTH 1024 → 默认 8192 = 32KB），为 CoreMark 做准备。
+2. 内存**同步读**（SYNC_READ=1）：组合读占分布式 RAM/LUT，BRAM 化后才能满足资源目标（LUT<5K）。
+3. dmem 读写地址分离（读提前到 EX 阶段，与同步写错开，可推断 Block RAM）。
+4. 取指链路重构：新增 IF2 取指级（pc_f2/instr_f2/valid_f2）+ reg_ifid 增加 valid_in 端口。
+5. 全部回归（4 个 tb_pipe_* + tb_single/tb_imem/tb_dmem + riscv-tests）仿真通过后提交 git。
+
+### 遇到的问题与 debug 过程（按调试主线，本轮核心）
+| # | 问题 | debug 过程 | 根因 | 解决方法 |
+|---|---|---|---|---|
+| 1 | 同步取指后 4 个 tb_pipe 全 FAIL（basic 超时） | 把 tb_pipe_debug 从多行逐拍打印改为**单行紧凑打印**（`IF: pcf/pcfn/mis/a/ar/ptar/vf2 | EX: pc/brs1/brs2/mis/brpc/btar/brres | F2/ID/WB`），轨迹可读性大增；basic13.txt 追踪 blt 循环发现：每轮 blt mis=0 且预测 taken（BTB 已训练）时，pcreg 按预测跳转，但 **imem.a 仍接 pcf（旧地址）**，addr_r 锁存旧地址 → blt 目标指令被重复取指、循环体被重复执行 | 预测 taken 时 imem.a 必须取**预测目标**而非顺序 pcf | ① imem.a 改接 `mispredict ? pcf_next : (stallf ? pcf : (pred_taken_f ? pred_target_f : pcf))` |
+| 2 | 修复①后仍全 FAIL（basic 超时 pc=0x60） | basic14.txt 发现 BTB 已预测 taken 且 a 也接 pred_target_f 后，每拍 `ar=000070 ... EX pc=000064 ... mis=1`（blt 每轮都 mis），预测与指令错拍 | **branch_predictor 用 pcf 查询，但 BRAM 下 instr/addr_r 对应的是 imem_addr（慢 1 拍）** → 用旧地址查询的预测配错指令 | ② bp 的 .pcf 改接 `imem_addr`（预测查询与 BRAM 输出对齐） |
+| 3 | 修复②后仍 FAIL（basic 超时 pc=xxxxxxxx） | basic15.txt 确认 **X 死锁**：imem 内部 addr_r 寄存器无复位，仿真初始 X → 数组索引 X → pred=X → a=X | addr_r 无复位（综合会初始化但仿真不） | ③ imem.v 新增 `reset` 端口 + 同步读分支 `if(reset) addr_r<=0`；riscv_pipeline/riscv_single/tb_imem 三处例化同步补 .reset（tb_imem 加 `reset=1;#10;reset=0`） |
+| 4 | 修复③后 basic PASS、branch PASS，但 hazard/full FAIL；branch 曾出现 mem100 got 1 expect 100 | branch2.txt 追循环：loop1 blt 正常到 a0=100，但 j(done) 后 0x64 的 sw 被重复执行 3 次（拍 315/622/923），后两次 brs2=1 覆盖正确值 100——**幽灵 sw 来自循环回归**；branch4.txt（加 ptar/brpc/btar 打印）定位：mispredict 分支把 `addr_prev<=imem_addr; pcf_prev<=pcf`（陈旧指令基准）记录下来，下一拍恢复取指的目标地址恰与陈旧地址相同 → 基准检测误判"重复取指"→ valid_f2=0 抑制恢复 → 部分恢复指令被吞 | mispredict 分支更新 addr_prev/pcf_prev 导致恢复取指被误判重复抑制（地址恰好相同） | ④ mispredict 分支把基准重置为 `32'hFFFFFFFF`（不可能地址）：mispredict 后恢复取指必判有效，只有真正"地址未迁+PC 已变"的冗余预取才被屏蔽 |
+| 5 | 修复④后 basic/branch PASS，hazard 4 错（mem108 got 0 expect 0x1E1；mem10C got 0xFFFFFF0F expect 0xF0；mem110 got 0 expect 0xE0；mem114 got 0 expect 0x2D2）、full FAIL | 隔离实验（此前已确立）：新取指级/reg_ifid/valid 逻辑在组合读下 basic/branch PASS，hazard/full 的 FAIL 与取指无关，属 **dmem 同步读链路**。hazard9.txt 轨迹确认：EX 序列 0x24→0x24→0x28→0x30，**0x2C 的 add t5 从未执行**（t5=0 → sub 得 0xFFFFFF0F、and 得 0、sw 得 0，全部失败项由此解释） | **load-use stall 期间取指"不冻结"**：BRAM 化后取指链路多一拍（pcf→addr_r→IF2），stall 开始时 addr_r 已锁存下一条（0x2C add t5），但 reg_ifid 保持（不锁存）→ 恢复后 F2 取的是"恢复拍的 addr_r"（0x30 sub），0x2C 永远丢失 | ⑤ imem.a 的 stall 分支改接 `imem_addr`（addr_r 自保持）：`a = stallf ? imem_addr : (mispredict ? pcf_next : (pred_taken_f ? pred_target_f : pcf))`——stall 期间取指地址冻结在"已取未锁存"的那条，恢复后 F2 正确锁存它 |
+| 6 | hazard 仍 4 错（同前值） | hazard8.txt 确认失败项不变；检查 dmem 时序：sw（MEM 写）与同址 lw（EX 读）在同一拍边沿，读 latch（`rd_word0<=mem[rd_addr]`）与写 mem（`mem[wr_addr]<=wd`）并行且均非阻塞 → 读 latch 采到写前旧值（read-after-write） | **dmem 同步读 read-after-write**：同拍"写地址==读地址"时读 latch 与写 mem 竞争 | ⑥ dmem.v sync_read 块加**写贯穿旁路**：`same_word = we && (wr_addr[31:2]==rd_addr[31:2])`，组合块提前算 wpost0/wpost1（镜像 sb/sh/sw 含非对齐的"写后字"），`if(same_word) rd_word0<=wpost0/rd_word1<=wpost1 else <=mem[...]` |
+
+**debug 方法补充（本轮新增，核心）**
+1. **单行紧凑轨迹打印**：多行逐拍打印在长循环里无法追踪，改为一行含 IF/EX/F2/ID/WB 全链关键信号（pcf/a/ar/ptar/vf2/brs1/brs2/brpc/btar/brres），相邻拍对比即可看出"错位/重复/丢失"。
+2. **数据模式反推**：hazard 4 个失败值（0、0xFFFFFF0F=0-241、0、0）统一由"t5=0"解释 → 反推出 add t5 未执行 → 追取指序列发现 0x2C 被跳过 → 定位 stall 期间取指不冻结。
+3. **X 死锁先于逻辑排查**：同步读寄存器无复位时仿真初值 X 会污染一切（地址→预测→地址循环），任何 BRAM 化改造必须先补 reset。
+4. **隔离实验**：新逻辑在组合读下 PASS（basic/branch）说明取指修复正确；FAIL 只在同步读出现则锁定 dmem 链路，避免在已正确的部分反复折腾。
+5. **基准重置法**：重复取指检测的"基准"在 mispredict 时必须重置为不可能地址，保证恢复取指必有效——这是"预取目标被冲刷"与"恢复取指"冲突的正确解法。
+6. **写读同址旁路**：同步读+同步写同拍同址时，读 latch 必须采"写后值"（按 sb/sh/sw 部分合并），与写块镜像实现，覆盖非对齐。
+
+### 实验结果
+- **同步读（BRAM 模式）下 4 个流水线回归全 PASS**：tb_pipe_basic（74 周期）、tb_pipe_hazard（34 周期）、tb_pipe_branch（352 周期）、tb_pipe_full（156 周期）。
+- **其余 TB 全 PASS**：tb_single（单周期，SYNC_READ=0 不受影响）、tb_imem（新增 reset 初始化序列）、tb_dmem（字/半字/字节+非对齐全项）。
+- **riscv-tests 40/42 PASS**（fence_i 自修改代码 SKIP、ma_data 官方 RV64 sd 依赖 SKIP，与 v0.3 一致，无回归）。
+- 修改文件：imem.v（SYNC_READ 参数化 + DEPTH=8192 + reset 端口 + rd_addr 输出）、dmem.v（SYNC_READ 参数化 + 读写地址分离 + 写后值旁路）、riscv_pipeline.v（IF2 取指级 + a 三路选择 + bp 查询对齐 imem_addr + 基准重置）、pipe_regs.v（reg_ifid 增 valid_in）、riscv_single.v（imem 例化补 reset）、tb_pipe_debug.v（单行紧凑打印）、tb_imem.v（reset 序列）。
+
+### 结论
+内存 BRAM 化完成：imem/dmem 32KB 参数化 + 同步读，取指链路（IF2 + valid + 重复抑制）与 dmem read-after-write 旁路全部修通；
+5 个根因（预测目标取指、bp 查询错拍、addr_r X 死锁、mispredict 基准污染、stall 取指不冻结 + dmem 旁路）全部修复并有回归覆盖；
+组合读（单周期）与同步读（流水线）两条路径行为一致，为 CoreMark 仿真跑分与 LUT<5K 资源目标扫清障碍。
+
+### 下一步
+1. 重跑 build_ac7021b.tcl 取 BRAM 化后资源（utilization_placed.rpt），核对 LUT<5K。
+2. CoreMark 工具链确认（riscv-gcc 下载）→ RV32I 裸机移植 → 仿真跑分（iterations/s）。
+3. 正式设计文档（逻辑框图+数据流/控制流标注、子模块信号列表、RTL 代码、仿真报告+波形）Word/PDF。
+4. 矩阵乘法/快速排序应用（仿真+上板）+ 演示视频。
+5. README 更新 BRAM 章节 + git 提交（本次 BRAM 化 + 第 7 次记录）。

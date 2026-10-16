@@ -1,24 +1,41 @@
 // ============================================================================
-// tb_imem.v - Ö¸ÁîÄÚ´æ¼ÓÔØ²âÊÔ
-// ÒÀÀµ£ºÔËĞĞÄ¿Â¼ program.hex£¨½Å±¾¸´ÖÆ£¬ÕâÀïÓÃ asm_selftest.hex£©
-// ¼ì²é£ºµØÖ·0 Ó¦Îª add x1,x2,x3 = 0x003100B3
+// tb_imem.v - æŒ‡ä»¤å†…å­˜å›å½’æµ‹è¯•ï¼ˆåŒæ­¥è¯»ï¼ŒSYNC_READ=1ï¼‰
+// åŠ è½½å½“å‰ç›®å½• program.hexï¼ˆè„šæœ¬å¤åˆ¶ï¼Œç­‰ä»· asm_selftest.hexï¼‰ï¼š
+//   åœ°å€ 0 åº”ä¸º add x1,x2,x3 = 0x003100B3
+//   åœ°å€ 4 åº”ä¸º sub x4,x5,x6 = 0x40628233
 // ============================================================================
 `timescale 1ns/1ps
 module tb_imem;
+    reg        clk = 0;
+    reg        reset = 0;
     reg  [31:0] a;
     wire [31:0] rd;
     integer errors = 0;
 
-    imem uut (.a(a), .rd(rd));
+    imem uut (.clk(clk), .reset(reset), .a(a), .rd(rd));
+    always #5 clk = ~clk;
+
+    task check;
+        input [31:0] exp;
+        input [79:0] name;
+        begin
+            if (rd !== exp) begin
+                $display("FAIL %0s: got %08X expect %08X (addr=%08X)",
+                         name, rd, exp, a);
+                errors = errors + 1;
+            end
+        end
+    endtask
 
     initial begin
         $display("=== tb_imem start ===");
-        a = 32'h0; #10;
+        reset = 1; #10; reset = 0;  // å¤ä½ addr_rï¼Œé˜²ä»¿çœŸåˆå§‹ X
+        a = 32'h0; #10;   // t=5 è¾¹æ²¿é”å­˜ mem[0]
         if (rd !== 32'h003100B3) begin
             $display("FAIL imem[0]: got %08X expect 003100B3", rd);
             errors = errors + 1;
         end
-        a = 32'h4; #10;   // sub x4,x5,x6 = 0x40628233
+        a = 32'h4; #10;   // t=15 è¾¹æ²¿é”å­˜ mem[1]
         if (rd !== 32'h40628233) begin
             $display("FAIL imem[1]: got %08X expect 40628233", rd);
             errors = errors + 1;

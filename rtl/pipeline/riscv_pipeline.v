@@ -1,35 +1,33 @@
 `timescale 1ns/1ps
 // ============================================================================
-// riscv_pipeline.v - RV32I Îå¼¶Á÷Ë®Ïß´¦ÀíÆ÷£¨IF/ID/EX/MEM/WB£©
+// riscv_pipeline.v - RV32I ï¿½å¼¶ï¿½ï¿½Ë®ï¿½ß´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½IF/ID/EX/MEM/WBï¿½ï¿½
 //
-// ÌØĞÔ£º
-//   * ÍêÕû RV32I ÕûÊıÖ¸Áî¼¯
-//   * Êı¾İÃ°ÏÕ£ºEX/MEM Óë MEM/WB Á½¼¶ÅÔÂ·×ª·¢ + Load-Use Í£¶Ù
-//   * ¿ØÖÆÃ°ÏÕ£º2-bit ±¥ºÍ¼ÆÊıÆ÷·ÖÖ§Ô¤²â + BTB£¬·ÖÖ§/Ìø×ªÔÚ EX ½âÎö£¬
-//     Ô¤²â´íÎó³åË¢ IF/ID Óë ID/EX Á½¼¶
-//   * jal/jalr ÔÚ EX ¶Î½âÎö£»jalr Ä¿±êµÍ 1 Î»ÇåÁã£¨RISC-V ¹æ·¶£©
-//   * ¿ÉÑ¡ MMIO£ºÏò 0xFxxxxxxx µØÖ·Ğ´Êı¾İÊ±Êä³ö io_write/io_wdata£¨FPGA ÑİÊ¾ÓÃ£©
+// ï¿½ï¿½ï¿½Ô£ï¿½
+//   * ï¿½ï¿½ï¿½ï¿½ RV32I ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½î¼¯
+//   * ï¿½ï¿½ï¿½ï¿½Ã°ï¿½Õ£ï¿½EX/MEM ï¿½ï¿½ MEM/WB ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·×ªï¿½ï¿½ + Load-Use Í£ï¿½ï¿½
+//   * ï¿½ï¿½ï¿½ï¿½Ã°ï¿½Õ£ï¿½2-bit ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö§Ô¤ï¿½ï¿½ + BTBï¿½ï¿½ï¿½ï¿½Ö§/ï¿½ï¿½×ªï¿½ï¿½ EX ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//     Ô¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¢ IF/ID ï¿½ï¿½ ID/EX ï¿½ï¿½ï¿½ï¿½
+//   * jal/jalr ï¿½ï¿½ EX ï¿½Î½ï¿½ï¿½ï¿½ï¿½ï¿½jalr Ä¿ï¿½ï¿½ï¿½ 1 Î»ï¿½ï¿½ï¿½ã£¨RISC-V ï¿½æ·¶ï¿½ï¿½
+//   * ï¿½ï¿½Ñ¡ MMIOï¿½ï¿½ï¿½ï¿½ 0xFxxxxxxx ï¿½ï¿½Ö·Ğ´ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ io_write/io_wdataï¿½ï¿½FPGA ï¿½ï¿½Ê¾ï¿½Ã£ï¿½
 // ============================================================================
 module riscv_pipeline (
     input        clk,
     input        reset,
-    // ---- ¹Û²ì¶Ë¿Ú£¨TB/µ÷ÊÔ£©----
+    // ---- ï¿½Û²ï¿½Ë¿Ú£ï¿½TB/ï¿½ï¿½ï¿½Ô£ï¿½----
     output wire [31:0] pc,
     output wire [31:0] instr,
     output wire        io_write,
     output wire [31:0] io_wdata
 );
-    // ================= È«²¿ÄÚ²¿ĞÅºÅÉùÃ÷ =================
+    // ================= È«ï¿½ï¿½ï¿½Ú²ï¿½ï¿½Åºï¿½ï¿½ï¿½ï¿½ï¿½ =================
     // ---- IF ----
     wire [31:0] pcf, pcf_next, pcplus4_f, instr_f;
     wire        pred_taken_f;
     wire [31:0] pred_target_f;
-    // ---- Ã°ÏÕ¿ØÖÆ ----
+    // ---- Ã°ï¿½Õ¿ï¿½ï¿½ï¿½ ----
     wire        stallf, stalld, flushe;
     wire        mispredict;
-    // ---- IF/ID ----
-    wire [31:0] pc_d, instr_d;
-    wire        pred_d, valid_d;
+    // ---- IF/ID ----ï¼ˆIF2 ï¿½ï¿½È¡Ö¸ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½ï¼šinstr_f + pc_f2 + pred_f2ï¿½ï¿½
     // ---- ID ----
     wire [4:0]  rs1_d, rs2_d, rd_d;
     wire [2:0]  funct3_d;
@@ -40,7 +38,7 @@ module riscv_pipeline (
     wire [2:0]  immsrc_d;
     wire [3:0]  alucontrol_d;
     wire        jalr_d;
-    // ---- ID/EX Êä³ö ----
+    // ---- ID/EX ï¿½ï¿½ï¿½ ----
     wire        regwrite_e, alusrca_e, alusrcb_e, memwrite_e, branch_e, jump_e;
     wire [1:0]  resultsrc_e, aluop_e;
     wire        jalr_e, valid_e;
@@ -58,7 +56,7 @@ module riscv_pipeline (
     wire [31:0] branch_target_e, pcplus4_e;
     wire [1:0]  forwardae, forwardbe;
     wire        branch_resolved_e;
-    // ---- EX/MEM Êä³ö ----
+    // ---- EX/MEM ï¿½ï¿½ï¿½ ----
     wire        regwrite_m, memwrite_m;
     wire [1:0]  resultsrc_m;
     wire [2:0]  funct3_m;
@@ -68,7 +66,7 @@ module riscv_pipeline (
     // ---- MEM ----
     wire [31:0] readdata_m;
     wire        io_write_m;
-    // ---- MEM/WB Êä³ö ----
+    // ---- MEM/WB ï¿½ï¿½ï¿½ ----
     wire        regwrite_w;
     wire [1:0]  resultsrc_w;
     wire [31:0] readdata_w, alu_result_w, pcplus4_w;
@@ -77,31 +75,92 @@ module riscv_pipeline (
     // ---- WB ----
     wire [31:0] writedata_w;
 
-    // ================= IF ¶Î =================
+    // ================= IF ï¿½ï¿½ =================
     flopr #(.W(32)) pcreg (.clk(clk), .reset(reset), .d(pcf_next), .q(pcf));
-    imem imem_i (.a(pcf), .rd(instr_f));
-    assign pcplus4_f = pcf + 32'd4;
-    assign pc = pcf;
+    // imem Í¬ï¿½ï¿½ï¿½ï¿½È¡Ö¸ï¿½-> IF2 ï¿½ï¿½È¡ï¿½ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½pc_f2 + instr_f2 + pred_f2 + valid_f2ï¿½ï¿½
+    // imem ï¿½Ú²ï¿½ï¿½ï¿½Ö·ï¿½Ä´ï¿½ï¿½ï¿½ addr_r <= aï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ addr_r ï¿½ï¿½ rd ï¿½ï¿½Ô´ï¿½Ì¶ï¿½Æ¥ï¿½ä£»
+    // IF2 ï¿½ï¿½ï¿½Ì´ï¿½ pc_f2<=imem.rd_addrï¿½ï¿½ï¿½ï¿½ instr_f2<=imem.rdï¿½ï¿½ï¿½ï¿½ï¿½ßºï¿½Í¬Ô´ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½Ô¡ï¿½
+    // a ï¿½ï¿½ mispredict Ê±ï¿½ï¿½ pcf_nextï¿½ï¿½Í¬ï¿½ï¿½ pcreg Ò»ï¿½ï¿½ï¿½Ğ»ï¿½ï¿½ï¿½Ä¿ï¿½ê£¨taken->branch_target_eï¼Œ
+    // ï¿½ï¿½taken->pcplus4_eï¿½ï¿½ï¿½ï¿½Ê¹ addr_r ï¿½ï¿½ pcreg ï¿½Ú·ï¿½Ö§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Ä¿ï¿½ê£»
+    // stall Ê± pcreg ï¿½ï¿½ï¿½Ö£ï¿½pcf ï¿½ï¿½ï¿½ä£¬addr_r ï¿½ï¿½ï¿½Ö£ï¿½IF2 ï¿½ï¿½ï¿½Ö£ï¿½(pc_f2,instr_f2) ï¿½ï¿½ï¿½Ö£ï¿½
+    wire [31:0] imem_rd;
+    wire [31:0] imem_addr;
+    imem imem_i (.clk(clk), .reset(reset), .a(stallf ? imem_addr : (mispredict ? pcf_next : (pred_taken_f ? pred_target_f : pcf))), .rd(imem_rd), .rd_addr(imem_addr));
+    reg [31:0] pc_f2;
+    reg [31:0] instr_f2;
+    reg        pred_f2;
+    reg        valid_f2;   // IF2 ï¿½ï¿½Ğ§Î»ï¿½ï¿½mispredict Ê±ï¿½ï¿½ï¿½å£¨ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ID/EXï¿½ï¿½
+    // addr_prev/pcf_prevï¼šï¿½ï¿½Ö·ï¿½Æ½ï¿½ï¿½ï¿½â¡£BRAM Í¬ï¿½ï¿½ï¿½ï¿½ imem ï¿½ï¿½ addr_r ï¿½ï¿½ pcreg ï¿½ï¿½ 1 ï¿½Ä£ï¿½
+    // mispredict/ï¿½ï¿½ï¿½ï¿½Ê± pcreg ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¶ï¿½ pcf_nextï¿½ï¿½ï¿½ï¿½ï¿½ addr_r ï¿½ï¿½ pcf ï¿½ï¿½ï¿½Ü³ï¿½ï¿½ï¿½
+    // "Í¬Ò»ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡"ï¿½ï¿½é‡å¤å–Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ pcf ï¿½ï¿½Î´ï¿½Æ¶ï¿½ï¿½ï¿½addr_r Î´ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ğ§ï¿½ï¿½
+    reg [31:0] addr_prev;
+    reg [31:0] pcf_prev;
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            pc_f2     <= 32'b0;
+            instr_f2  <= 32'b0;
+            pred_f2   <= 1'b0;
+            valid_f2  <= 1'b0;
+            addr_prev <= 32'b0;
+            pcf_prev  <= 32'b0;
+        end
+        else if (mispredict) begin
+            pc_f2     <= imem_addr;
+            instr_f2  <= imem_rd;
+            pred_f2   <= pred_taken_f;
+            valid_f2  <= 1'b0;     // ï¿½ï¿½Ç° IF2 Îªï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½Ö¸ï¿½
+            // ï¿½Ö¸ï¿½È¡Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½Ç±ï¿½ï¿½ï¿½ F2 ï¿½ï¿½Ô¤È¡ï¿½Ë£ï¿½
+            // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½Üµï¿½Ö·ï¿½ï¿½Ê¹ï¿½Ö¸ï¿½ï¿½Í±ï¿½ valid=1ï¿½ï¿½Ö»ï¿½ï¿½ï¿½Å»ï¿½Ö¸ï¿½È¡ï¿½Øµï¿½ï¿½Ø¸ï¿½ï¿½ï¿½ï¿½ï¿½
+            addr_prev <= 32'hFFFFFFFF;
+            pcf_prev  <= 32'hFFFFFFFF;
+        end
+        else if (stallf) begin
+            // ï¿½ï¿½ï¿½Ö£ï¿½IF2 ï¿½ï¿½ï¿½Ö£ï¿½ï¿½ï¿½È¡ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ä£¬ï¿½ï¿½É¿É¿ï¿½ï¿½Ä»ï¿½Ö¸ï¿½
+            pc_f2     <= pc_f2;
+            instr_f2  <= instr_f2;
+            pred_f2   <= pred_f2;
+            valid_f2  <= valid_f2;
+        end
+        else begin
+            pc_f2     <= imem_addr;
+            instr_f2  <= imem_rd;
+            pred_f2   <= pred_taken_f;
+            // addr_r Î´ï¿½Æ¶ï¿½ï¿½ï¿½ pcf ï¿½Ñ¶ï¿½ï¿½ï¿½ï¿½ï¿½â†’ ï¿½ï¿½ï¿½Ø¸ï¿½È¡ï¼ˆmispredict ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½Ö¸ï¿½ï¿½Ú¶ï¿½ï¿½Î£ï¿½
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼Ê±ï¿½ï¿½Ò»ï¿½ï¿½ï¼‰ï¿½ï¿½Îªï¿½ï¿½Ğ§ï¿½ï¿½ï¿½Å¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¼›
+            // addr_r Î´ï¿½Æ¶ï¿½ï¿½ï¿½ pcf Ò²Î´ï¿½ï¿½ï¿½ï¿½â†’ stall ï¿½Ö¸ï¿½ï¿½ï¿½Í¬Ò»Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ§ï¿½ï¿½
+            valid_f2  <= ((imem_addr == addr_prev) && (pcf != pcf_prev)) ? 1'b0 : 1'b1;
+            addr_prev <= imem_addr;
+            pcf_prev  <= pcf;
+        end
+    end
+    assign instr_f = instr_f2;
 
-    // ================= IF/ID ¼Ä´æÆ÷ =================
+    // ---- IF/ID ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½reg_ifidï¿½ï¿½ï¿½ï¿½stall Ê± enable=0 ï¿½ï¿½ï¿½Ö£ï¿½mispredict Ê± flush----
+    wire [31:0] pc_id, instr_id;
+    wire        pred_id, valid_id;
     reg_ifid ifid_reg (
         .clk(clk), .reset(reset),
-        .enable(~stalld), .flush(mispredict),
-        .pc_in(pcf), .instr_in(instr_f), .pred_in(pred_taken_f),
-        .pc(pc_d), .instr(instr_d), .pred(pred_d), .valid(valid_d)
+        .enable(~stalld),      // load-use stall Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ID ï¿½ï¿½Ö¸ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½
+        .flush(mispredict),    // ï¿½ï¿½ï¿½Ö§ï¿½ï¿½ï¿½ï¿½Ë¢
+        .pc_in(pc_f2), .instr_in(instr_f), .pred_in(pred_f2), .valid_in(valid_f2),
+        .pc(pc_id), .instr(instr_id), .pred(pred_id), .valid(valid_id)
     );
-    assign instr = instr_d;
+    assign pcplus4_f = pcf + 32'd4;
+    assign pc = pcf;
+    assign instr = instr_f;
 
-    // ================= ID ¶Î =================
-    assign rs1_d = instr_d[19:15];
-    assign rs2_d = instr_d[24:20];
-    assign rd_d  = instr_d[11:7];
-    assign funct3_d = instr_d[14:12];
-    assign funct7_d = instr_d[31:25];
-    assign opcode_d = instr_d[6:0];
+    // ================= ID ï¿½ï¿½ =================
+    // Ê¹ï¿½ï¿½ IF/ID ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½reg_ifidï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½pc_id/instr_idï¿½ï¿½
+    // reg_ifid ï¿½ï¿½ stall Ê± enable=0 ï¿½ï¿½ï¿½Ö£ï¿½ï¿½ï¿½Ö¤ load-use Ê± ID ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½Ê§
+    assign rs1_d = instr_id[19:15];
+    assign rs2_d = instr_id[24:20];
+    assign rd_d  = instr_id[11:7];
+    assign funct3_d = instr_id[14:12];
+    assign funct7_d = instr_id[31:25];
+    assign opcode_d = instr_id[6:0];
     assign jalr_d = (opcode_d == 7'b1100111);
 
-    // ¼Ä´æÆ÷¶Ñ¶Á£¨×éºÏ¶Á£¬Í¬²½Ğ´£©¡£Ğ´»ØÓë ID ¶Î¶ÁÍ¬ÑØ·¢ÉúÊ±£¬Ö±½ÓÅÔÂ· WB ½á¹û
+    // ï¿½Ä´ï¿½ï¿½ï¿½ï¿½Ñ¶ï¿½ï¿½ï¿½ï¿½ï¿½Ï¶ï¿½ï¿½ï¿½Í¬ï¿½ï¿½Ğ´ï¿½ï¿½ï¿½ï¿½Ğ´ï¿½ï¿½ï¿½ï¿½ ID ï¿½Î¶ï¿½Í¬ï¿½Ø·ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ö±ï¿½ï¿½ï¿½ï¿½Â· WB ï¿½ï¿½ï¿½
     wire [31:0] rf_rd1, rf_rd2;
     regfile rf (
         .clk(clk), .we3(regwrite_w & valid_w), .a1(rs1_d), .a2(rs2_d), .a3(rd_w),
@@ -111,7 +170,7 @@ module riscv_pipeline (
                    ? writedata_w : rf_rd1;
     assign rd2_d = ((regwrite_w & valid_w) && (rd_w == rs2_d) && (rd_w != 5'b0))
                    ? writedata_w : rf_rd2;
-    extend ext (.instr(instr_d[31:7]), .immsrc(immsrc_d), .immext(immext_d));
+    extend ext (.instr(instr_id[31:7]), .immsrc(immsrc_d), .immext(immext_d));
     control_unit cu (
         .opcode(opcode_d), .funct3(funct3_d), .funct7(funct7_d),
         .regwrite(regwrite_d), .alusrca(alusrca_d), .alusrcb(alusrcb_d),
@@ -119,25 +178,28 @@ module riscv_pipeline (
         .jump(jump_d), .aluop(aluop_d), .immsrc(immsrc_d), .alucontrol(alucontrol_d)
     );
 
-    // ---- Ã°ÏÕ¼ì²â£¨Load-Use£©----
-    assign memread_e = resultsrc_e[0] & valid_e;   // EX ¶ÎÎª load
+    // ---- Ã°ï¿½Õ¼ï¿½â£¨Load-Useï¿½ï¿½----
+    // BRAM ï¿½ï¿½ dmem ï¿½ï¿½ EX/MEM ï¿½ß±ï¿½ï¿½ï¿½Ö£ï¿½MEM ï¿½ï¿½ï¿½ï¿½ï¿½İ¿ï¿½ï¿½Ã£ï¿½Í¨ï¿½ï¿½ d2 ï¿½ï¿½×ªï¿½ï¿½
+    // load ï¿½ï¿½ EX Ê±ï¿½ï¿½ 1 ï¿½ï¿½ stallï¿½ï¿½ï¿½Ã´ï¿½Ò»ï¿½ï¿½ EX Ê± load ï¿½ï¿½ MEM/WB ï¿½É¶ï¿½ï¿½ï¿½
+    assign memread_e = resultsrc_e[0] & valid_e;   // EX ï¿½ï¿½Îª load
     hazard_unit hu (
-        .memread_e(memread_e),
-        .rde(rd_e),
+        .memread_e(memread_e), .rde(rd_e),
         .rs1_d(rs1_d), .rs2_d(rs2_d),
         .stallf(stallf), .stalld(stalld), .flushe(flushe)
     );
 
-    // ================= ID/EX ¼Ä´æÆ÷ =================
+    // ================= ID/EX ï¿½Ä´ï¿½ï¿½ï¿½ =================
+    // flushï¿½ï¿½flushe(load-use bubble) | mispredict(ï¿½ï¿½Ö§ï¿½ï¿½ï¿½ï¿½) | ~valid_f2
+    // ï¼ˆmispredict ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ IF2 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ã±ï¿½Ö¾ï¿½ï¿½×¡ï¼‰
     reg_idex idex_reg (
         .clk(clk), .reset(reset),
-        .flush(flushe | mispredict | ~valid_d),   // IF/ID ÆøÅİÒ²×¢Èë ID/EX ÆøÅİ
+        .flush(flushe | mispredict | ~valid_id),
         .regwrite_d(regwrite_d), .alusrca_d(alusrca_d), .alusrcb_d(alusrcb_d),
         .memwrite_d(memwrite_d), .branch_d(branch_d), .jump_d(jump_d),
         .resultsrc_d(resultsrc_d), .aluop_d(aluop_d), .jalr_d(jalr_d),
-        .pc_d(pc_d), .rd1_d(rd1_d), .rd2_d(rd2_d), .immext_d(immext_d),
+        .pc_d(pc_id), .rd1_d(rd1_d), .rd2_d(rd2_d), .immext_d(immext_d),
         .rs1_d(rs1_d), .rs2_d(rs2_d), .rd_d(rd_d),
-        .funct3_d(funct3_d), .funct7_d(funct7_d), .opcode_d(opcode_d), .pred_d(pred_d),
+        .funct3_d(funct3_d), .funct7_d(funct7_d), .opcode_d(opcode_d), .pred_d(pred_id),
         .regwrite(regwrite_e), .alusrca(alusrca_e), .alusrcb(alusrcb_e),
         .memwrite(memwrite_e), .branch(branch_e), .jump(jump_e),
         .resultsrc(resultsrc_e), .aluop(aluop_e), .jalr(jalr_e),
@@ -147,9 +209,9 @@ module riscv_pipeline (
         .valid(valid_e)
     );
 
-    // ================= EX ¶Î =================
-    // ---- ÅÔÂ·×ª·¢ ----
-    // ×ª·¢Ô´£ºload Ö¸ÁîµÄ½á¹ûÊÇÄÚ´æ¶ÁÊı¾İ£¨readdata£©£¬²»ÊÇ ALU ½á¹û£¨µØÖ·£©
+    // ================= EX ï¿½ï¿½ =================
+    // ---- ï¿½ï¿½Â·×ªï¿½ï¿½ ----
+    // ×ªï¿½ï¿½Ô´ï¿½ï¿½load Ö¸ï¿½ï¿½Ä½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½İ£ï¿½readdataï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ALU ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½
     wire [31:0] mem_result_m, wb_result_w;
     assign mem_result_m = resultsrc_m[0] ? readdata_m : alu_result_m;
     assign wb_result_w  = resultsrc_w[0] ? readdata_w : alu_result_w;
@@ -163,9 +225,9 @@ module riscv_pipeline (
     mux3 #(.W(32)) fwb (.d0(rd2_e), .d1(wb_result_w), .d2(mem_result_m),
                         .s(forwardbe), .y(rs2e_data));
 
-    // ---- ALU ¿ØÖÆÒëÂë£¨EX ¶Î£©----
-    // ×¢Òâ£ºaddi µÈ I ĞÍÖ¸ÁîµÄ funct7 ×Ö¶ÎÊÇÁ¢¼´ÊıÎ»£¬²»ÄÜÓÃÀ´Çø·Ö add/sub£»
-    //       Ö»ÓĞ R ĞÍ£¨opcode=0110011£©²Å°´ funct7[5] Çø·Ö add/sub
+    // ---- ALU ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë£¨EX ï¿½Î£ï¿½----
+    // ×¢ï¿½â£ºaddi ï¿½ï¿½ I ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ funct7 ï¿½Ö¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ add/subï¿½ï¿½
+    //       Ö»ï¿½ï¿½ R ï¿½Í£ï¿½opcode=0110011ï¿½ï¿½ï¿½Å°ï¿½ funct7[5] ï¿½ï¿½ï¿½ï¿½ add/sub
     always @(*) begin
         case (aluop_e)
             2'b00: alucontrol_e = 4'b0000;
@@ -193,31 +255,31 @@ module riscv_pipeline (
     alu alu_i (.a(alu_srca), .b(alu_srcb), .alucontrol(alucontrol_e),
                .result(alu_result_e), .zero());
 
-    // ---- ·ÖÖ§/Ìø×ª½âÎö ----
+    // ---- ï¿½ï¿½Ö§/ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ ----
     branch_unit bu (.rs1(rs1e_data), .rs2(rs2e_data), .funct3(funct3_e), .taken(taken_e));
     assign branch_taken_e = (branch_e & taken_e) | jump_e;
     assign branch_target_e = (jump_e & ~branch_e) ? {alu_result_e[31:1], 1'b0}
-                                                   : alu_result_e;   // jalr Ä¿±ê¶ÔÆë
+                                                   : alu_result_e;   // jalr Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½
     assign mispredict = (branch_e | jump_e) & valid_e & (branch_taken_e != pred_e);
     assign pcplus4_e = pc_e + 32'd4;
 
-    // ---- ·ÖÖ§Ô¤²âÆ÷¸üĞÂ£¨½ö B ĞÍÓë jal Ğ´Èë BTB£©----
+    // ---- ï¿½ï¿½Ö§Ô¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â£ï¿½ï¿½ï¿½ B ï¿½ï¿½ï¿½ï¿½ jal Ğ´ï¿½ï¿½ BTBï¿½ï¿½----
     assign branch_resolved_e = (branch_e | (jump_e & ~jalr_e)) & valid_e;
     branch_predictor bp (
         .clk(clk), .reset(reset),
-        .pcf(pcf), .pred_target(pred_target_f), .pred_taken(pred_taken_f),
+        .pcf(imem_addr), .pred_target(pred_target_f), .pred_taken(pred_taken_f),
         .branch_resolved(branch_resolved_e), .branch_taken(branch_taken_e),
         .branch_pc(pc_e), .branch_target(branch_target_e)
     );
 
-    // ---- PC ¸üĞÂ£¨ÓÅÏÈ¼¶£º·ÖÖ§ÖØ¶¨Ïò > Ô¤²âÄ¿±ê > Í£¶Ù > PC+4£©----
-    // mispredict Ê±°´"Êµ¼ÊÖ´ĞĞ·½Ïò"È¡Ä¿±ê£º·ÖÖ§Êµ¼ÊÌøÔòÈ¡ target£¬²»ÌøÔòÈ¡ PC+4
+    // ---- PC ï¿½ï¿½ï¿½Â£ï¿½ï¿½ï¿½ï¿½È¼ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½Ø¶ï¿½ï¿½ï¿½ > Ô¤ï¿½ï¿½Ä¿ï¿½ï¿½ > Í£ï¿½ï¿½ > PC+4ï¿½ï¿½----
+    // mispredict Ê±ï¿½ï¿½"Êµï¿½ï¿½Ö´ï¿½Ğ·ï¿½ï¿½ï¿½"È¡Ä¿ï¿½ê£ºï¿½ï¿½Ö§Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ targetï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ PC+4
     assign pcf_next = mispredict            ? (branch_taken_e ? branch_target_e : pcplus4_e) :
                       (pred_taken_f & ~stallf) ? pred_target_f :
                       stallf                ? pcf :
                       pcplus4_f;
 
-    // ================= EX/MEM ¼Ä´æÆ÷ =================
+    // ================= EX/MEM ï¿½Ä´ï¿½ï¿½ï¿½ =================
     reg_exmem exmem_reg (
         .clk(clk), .reset(reset),
         .regwrite_e(regwrite_e), .memwrite_e(memwrite_e),
@@ -232,19 +294,23 @@ module riscv_pipeline (
         .valid(valid_m)
     );
 
-    // ================= MEM ¶Î =================
-    // MMIO£ºÏò 0xFxxxxxxx Ğ´Êı¾İ -> Êä³ö£¨²»Ğ´Èë DMEM£©
+    // ================= MEM ï¿½ï¿½ =================
+    // MMIOï¿½ï¿½ï¿½ï¿½ 0xFxxxxxxx Ğ´ï¿½ï¿½ï¿½ï¿½ -> ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ´ï¿½ï¿½ DMEMï¿½ï¿½
     assign io_write_m = memwrite_m & valid_m & (alu_result_m[31:28] == 4'hF);
+    // dmem ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ EX ï¿½Î£ï¿½EX/MEM ï¿½ß±ï¿½ï¿½ï¿½Öºï¿½ MEM ï¿½ï¿½ï¿½ï¿½ï¿½İ¿ï¿½ï¿½Ã£ï¿½
+    // memwb ï¿½Ú¼ï¿½ MEM/WB ï¿½ß±ï¿½ï¿½ï¿½ï¿½ readdataï¿½ï¿½load ï¿½ï¿½ï¿½ 1 ï¿½ï¿½ stall ï¿½É¶ï¿½ï¿½ï¿½
     dmem dmem_i (
         .clk(clk),
         .we(memwrite_m & valid_m & ~io_write_m),
-        .funct3(funct3_m),
-        .a(alu_result_m),
+        .funct3_r(funct3_m),
+        .funct3_w(funct3_m),
+        .rd_addr(alu_result_m),
+        .wr_addr(alu_result_m),
         .wd(writedata_m),
         .rd(readdata_m)
     );
 
-    // MMIO ¼Ä´æÆ÷Êä³ö£¨Í¬²½Ò»ÅÄ£¬¹© FPGA ¶¥²ã²ÉÑù£©
+    // MMIO ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½Ò»ï¿½Ä£ï¿½ï¿½ï¿½ FPGA ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     reg io_write_r;
     reg [31:0] io_wdata_r;
     always @(posedge clk or posedge reset) begin
@@ -260,8 +326,10 @@ module riscv_pipeline (
     assign io_write = io_write_r;
     assign io_wdata = io_wdata_r;
 
-    // ================= MEM/WB ¼Ä´æÆ÷ =================
-    reg_memwb memwb_reg (
+    // ================= MEM/WB ï¿½Ä´ï¿½ï¿½ï¿½ =================
+    // LOCK_READDATA=0ï¿½ï¿½readdata Ö±Í¨ dmem ï¿½ï¿½ï¿½â€”â€”dmem Í¬ï¿½ï¿½ï¿½ï¿½ MEM ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ£ï¿½
+    // memwb ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ WB ï¿½Î±ï¿½ï¿½ï¿½É¿É¿ï¿½ï¿½Ã£ï¿½ï¿½ï¿½Îª lock ï¿½ï¿½ï¿½ï¿½Ç°Ò»ï¿½ï¿½
+    reg_memwb #(.LOCK_READDATA(0)) memwb_reg (
         .clk(clk), .reset(reset),
         .regwrite_m(regwrite_m), .resultsrc_m(resultsrc_m),
         .readdata_m(readdata_m), .alu_result_m(alu_result_m),
@@ -273,7 +341,7 @@ module riscv_pipeline (
         .valid(valid_w)
     );
 
-    // ================= WB ¶Î =================
+    // ================= WB ï¿½ï¿½ =================
     mux4 #(.W(32)) muxwb (.d0(alu_result_w), .d1(readdata_w), .d2(pcplus4_w),
                           .d3(32'b0), .s(resultsrc_w), .y(writedata_w));
 endmodule
