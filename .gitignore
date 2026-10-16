@@ -28,3 +28,7 @@ riscv-tests-src/riscv-tests-master/isa/*
 !riscv-tests-src/riscv-tests-master/isa/rv32ui/
 !riscv-tests-src/riscv-tests-master/isa/rv64ui/
 !riscv-tests-src/riscv-tests-master/isa/macros/
+# 下载缓存与工具链包（大文件不入库）
+bench/*.zip
+bench/toolchain/*.zip
+bench/coremark/coremark-main/docs/
