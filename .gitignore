@@ -1,0 +1,17 @@
+# 仿真产物
+sim/work/
+*.vcd
+*.wdb
+xsim.dir/
+
+# Python
+__pycache__/
+*.pyc
+
+# Vivado 工程产物
+fpga/*.xpr
+fpga/*.jou
+fpga/*.log
+*.bit
+*.ltx
+*.rpt
