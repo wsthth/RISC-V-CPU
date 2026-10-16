@@ -1,17 +1,17 @@
 # ============================================================================
-# program_zed.tcl â€”â€” è¿æ¥ ZedBoard å¹¶çƒ§å½•æ¯”ç‰¹æµ
-# ç”¨æ³•ï¼š
+# program_zed.tcl ¡ª¡ª Á¬½Ó ZedBoard ²¢ÉÕÂ¼±ÈÌØÁ÷
+# ÓÃ·¨£º
 #   D:\Xilinx\Vivado\2019.1\bin\vivado.bat -mode batch -source program_zed.tcl
-# å‰ç½®ï¼šæ¿å­å·²ä¸Šç”µå¹¶è¿æ¥ JTAGï¼ˆZedBoard æ¿è½½ Digilent USB-JTAGï¼‰
+# Ç°ÖÃ£º°å×ÓÒÑÉÏµç²¢Á¬½Ó JTAG£¨ZedBoard °åÔØ Digilent USB-JTAG£©
 # ============================================================================
 
 open_hw_manager
 connect_hw_server
 
-# æ‰“å¼€ç›®æ ‡å¹¶é€‰æ‹©ç¬¬ä¸€ä¸ªè®¾å¤‡ï¼ˆé€šå¸¸åªæœ‰ä¸€ä¸ª FPGAï¼‰
+# ´ò¿ªÄ¿±ê²¢Ñ¡ÔñµÚÒ»¸öÉè±¸£¨Í¨³£Ö»ÓĞÒ»¸ö FPGA£©
 open_hw_target
 if {[llength [get_hw_devices]] == 0} {
-    error "NO HW DEVICE FOUND: è¯·æ£€æŸ¥ JTAG è¿æ¥/é©±åŠ¨ï¼ˆZedBoard éœ€ Digilent USB-JTAG é©±åŠ¨ï¼‰"
+    error "NO HW DEVICE FOUND: Çë¼ì²é JTAG Á¬½Ó/Çı¶¯£¨ZedBoard Ğè Digilent USB-JTAG Çı¶¯£©"
 }
 current_hw_device [lindex [get_hw_devices] 0]
 

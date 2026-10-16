@@ -1,17 +1,17 @@
 `timescale 1ns/1ps
 // ============================================================================
-// hazard_unit.v - å†’é™©æ£€æµ‹å•å…ƒ
-// æ£€æµ‹ Load-Use æ•°æ®å†’é™©ï¼šEX æ®µæ˜¯ load ä¸”å…¶ç›®æ ‡å¯„å­˜å™¨æ˜¯ ID æ®µæŒ‡ä»¤çš„æº
-// å¤„ç†ï¼šå†»ç»“ PC ä¸ IF/IDï¼ˆstallï¼‰ï¼Œå¹¶åœ¨ ID/EX æ’å…¥æ°”æ³¡ï¼ˆflusheï¼‰
+// hazard_unit.v - Ã°ÏÕ¼ì²âµ¥Ôª
+// ¼ì²â Load-Use Êı¾İÃ°ÏÕ£ºEX ¶ÎÊÇ load ÇÒÆäÄ¿±ê¼Ä´æÆ÷ÊÇ ID ¶ÎÖ¸ÁîµÄÔ´
+// ´¦Àí£º¶³½á PC Óë IF/ID£¨stall£©£¬²¢ÔÚ ID/EX ²åÈëÆøÅİ£¨flushe£©
 // ============================================================================
 module hazard_unit (
-    input        memread_e,   // EX æ®µæŒ‡ä»¤æ˜¯ loadï¼ˆresultsrc==01 ä¸” validï¼‰
-    input  [4:0] rde,         // EX æ®µç›®æ ‡å¯„å­˜å™¨
-    input  [4:0] rs1_d,       // ID æ®µæºå¯„å­˜å™¨ 1
-    input  [4:0] rs2_d,       // ID æ®µæºå¯„å­˜å™¨ 2
-    output       stallf,      // å†»ç»“å–æŒ‡ï¼ˆPC ä¿æŒï¼‰
-    output       stalld,      // å†»ç»“è¯‘ç ï¼ˆIF/ID ä¿æŒï¼‰
-    output       flushe       // ID/EX æ°”æ³¡
+    input        memread_e,   // EX ¶ÎÖ¸ÁîÊÇ load£¨resultsrc==01 ÇÒ valid£©
+    input  [4:0] rde,         // EX ¶ÎÄ¿±ê¼Ä´æÆ÷
+    input  [4:0] rs1_d,       // ID ¶ÎÔ´¼Ä´æÆ÷ 1
+    input  [4:0] rs2_d,       // ID ¶ÎÔ´¼Ä´æÆ÷ 2
+    output       stallf,      // ¶³½áÈ¡Ö¸£¨PC ±£³Ö£©
+    output       stalld,      // ¶³½áÒëÂë£¨IF/ID ±£³Ö£©
+    output       flushe       // ID/EX ÆøÅİ
 );
     wire lwstall = memread_e && (rde == rs1_d || rde == rs2_d) && (rde != 5'b0);
 

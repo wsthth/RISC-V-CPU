@@ -6,7 +6,7 @@ if {[llength $targets] > 0} {
     set t [lindex $targets 0]
     open_hw_target $t
     puts "OPEN_TARGET=$t"
-    # å¤šæ¬¡åˆ·æ–°å°è¯•æ‰«æ JTAG é“¾ï¼ˆFT232H åˆå§‹åŒ– / æ¿ä¸Šç”µéœ€è¦æ—¶é—´ï¼‰
+    # ¶à´ÎË¢ĞÂ³¢ÊÔÉ¨Ãè JTAG Á´£¨FT232H ³õÊ¼»¯ / °åÉÏµçĞèÒªÊ±¼ä£©
     refresh_hw_server
     for {set i 0} {$i < 4} {incr i} {
         refresh_hw_target [current_hw_target]

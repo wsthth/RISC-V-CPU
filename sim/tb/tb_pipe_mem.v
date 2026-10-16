@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-// tb_pipe_mem.v - ç›‘è§† MEM æ®µ dmem è¯»å†™ï¼ˆå®šä½å†…å­˜è¢«è¯¯å†™é—®é¢˜ï¼‰
+// tb_pipe_mem.v - ¼àÊÓ MEM ¶Î dmem ¶ÁĞ´£¨¶¨Î»ÄÚ´æ±»ÎóĞ´ÎÊÌâ£©
 module tb_pipe_mem;
     reg        clk = 0;
     reg        reset = 1;

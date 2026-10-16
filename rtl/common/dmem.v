@@ -1,16 +1,16 @@
 `timescale 1ns/1ps
 // ============================================================================
-// dmem.v - æ•°æ®å†…å­˜ï¼ˆ1024 x 32bit = 4KBï¼Œå­—èŠ‚å¯»å€ï¼‰
-// æ”¯æŒ lb/lh/lw/lbu/lhu/sb/sh/swï¼›ç»„åˆè¯»ã€æ—¶é’Ÿæ²¿å†™
-// å¯é€‰ $readmemh("data.hex") åˆå§‹åŒ–ï¼ˆç”±å® DMEM_INIT æ§åˆ¶ï¼‰
+// dmem.v - Êı¾İÄÚ´æ£¨1024 x 32bit = 4KB£¬×Ö½ÚÑ°Ö·£©
+// Ö§³Ö lb/lh/lw/lbu/lhu/sb/sh/sw£»×éºÏ¶Á¡¢Ê±ÖÓÑØĞ´
+// ¿ÉÑ¡ $readmemh("data.hex") ³õÊ¼»¯£¨ÓÉºê DMEM_INIT ¿ØÖÆ£©
 // ============================================================================
 module dmem #(parameter DEPTH = 1024) (
     input             clk,
     input             we,       // MemWrite
-    input  [2:0]      funct3,   // è®¿å­˜å®½åº¦/ç¬¦å·
-    input  [31:0]     a,        // åœ°å€
-    input  [31:0]     wd,       // å†™æ•°æ®
-    output reg [31:0] rd        // è¯»æ•°æ®
+    input  [2:0]      funct3,   // ·Ã´æ¿í¶È/·ûºÅ
+    input  [31:0]     a,        // µØÖ·
+    input  [31:0]     wd,       // Ğ´Êı¾İ
+    output reg [31:0] rd        // ¶ÁÊı¾İ
 );
     reg [31:0] mem [0:DEPTH-1];
     integer i;
@@ -31,7 +31,7 @@ module dmem #(parameter DEPTH = 1024) (
     wire [31:0] addr = a[31:2];
     wire [1:0]  off  = a[1:0];
 
-    // ---- ç»„åˆè¯» ----
+    // ---- ×éºÏ¶Á ----
     always @(*) begin
         case (funct3)
             3'b000: begin  // lb
@@ -67,7 +67,7 @@ module dmem #(parameter DEPTH = 1024) (
         endcase
     end
 
-    // ---- åŒæ­¥å†™ ----
+    // ---- Í¬²½Ğ´ ----
     always @(posedge clk) begin
         if (we) begin
             case (funct3)

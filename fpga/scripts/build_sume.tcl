@@ -1,26 +1,26 @@
 # ============================================================================
-# build_sume.tcl â€”â€” NetFPGA SUME (XC7VX690TFFG1761-3) ä¸€é”®å»ºå·¥ç¨‹/ç»¼åˆ/å®ç°/å‡ºæ¯”ç‰¹æµ
-# ç”¨æ³•ï¼ˆWindows å‘½ä»¤è¡Œï¼Œåœ¨ fpga\scripts ç›®å½•ï¼‰ï¼š
+# build_sume.tcl ¡ª¡ª NetFPGA SUME (XC7VX690TFFG1761-3) Ò»¼ü½¨¹¤³Ì/×ÛºÏ/ÊµÏÖ/³ö±ÈÌØÁ÷
+# ÓÃ·¨£¨Windows ÃüÁîĞĞ£¬ÔÚ fpga\scripts Ä¿Â¼£©£º
 #   D:\Xilinx\Vivado\2019.1\bin\vivado.bat -mode batch -source build_sume.tcl
-# äº§ç‰©ï¼š..\vivado_sume\riscv_sume.runs\impl_1\riscv_sume.bit
-# æ³¨æ„ï¼šSUME ä¸æ˜¯ Vivado è‡ªå¸¦æ¿å¡ï¼Œæ­¤å¤„ç›´æ¥æŒ‰å™¨ä»¶å»ºå·¥ç¨‹ï¼›
-#       çº¦æŸ sume.xdc ä¸­çš„å¼•è„šéœ€æŒ‰æ¿å¡åŸç†å›¾æ ¸å¯¹ï¼ˆè§æ–‡ä»¶å¤´æ³¨é‡Šï¼‰ã€‚
+# ²úÎï£º..\vivado_sume\riscv_sume.runs\impl_1\riscv_sume.bit
+# ×¢Òâ£ºSUME ²»ÊÇ Vivado ×Ô´ø°å¿¨£¬´Ë´¦Ö±½Ó°´Æ÷¼ş½¨¹¤³Ì£»
+#       Ô¼Êø sume.xdc ÖĞµÄÒı½ÅĞè°´°å¿¨Ô­ÀíÍ¼ºË¶Ô£¨¼ûÎÄ¼şÍ·×¢ÊÍ£©¡£
 # ============================================================================
 
 set root "D:/my_project/RISC-V"
 set proj_dir "$root/fpga/vivado_sume"
 set part   xc7vx690tffg1761-3
 
-# æ¸…ç†æ—§å·¥ç¨‹ï¼ˆé‡å»ºï¼‰
+# ÇåÀí¾É¹¤³Ì£¨ÖØ½¨£©
 file delete -force $proj_dir
 
-# 1) å»ºå·¥ç¨‹
+# 1) ½¨¹¤³Ì
 create_project riscv_sume $proj_dir -part $part -force
 
-# 1b) åˆ‡åˆ°å·¥ç¨‹ç›®å½•ï¼š$readmemh("program.hex") åœ¨ç»¼åˆæ—¶æŒ‰è¿›ç¨‹ cwd è§£æ
+# 1b) ÇĞµ½¹¤³ÌÄ¿Â¼£º$readmemh("program.hex") ÔÚ×ÛºÏÊ±°´½ø³Ì cwd ½âÎö
 cd $proj_dir
 
-# 2) æ·»åŠ  RTLï¼ˆcommon + single_cycle + pipeline + fpga_topï¼‰
+# 2) Ìí¼Ó RTL£¨common + single_cycle + pipeline + fpga_top£©
 add_files [list \
     "$root/rtl/common/alu.v" \
     "$root/rtl/common/regfile.v" \
@@ -40,19 +40,19 @@ add_files [list \
     "$root/fpga/fpga_top.v" \
 ]
 
-# 3) å¤åˆ¶æµ‹è¯•ç¨‹åº hexï¼š$readmemh åœ¨ç»¼åˆæ—¶æŒ‰ <å·¥ç¨‹>.runs/synth_1 ç›®å½•è§£æ
+# 3) ¸´ÖÆ²âÊÔ³ÌĞò hex£º$readmemh ÔÚ×ÛºÏÊ±°´ <¹¤³Ì>.runs/synth_1 Ä¿Â¼½âÎö
 set run_dir [pwd]
 file copy -force "$root/testprog/hex/led.hex" "$proj_dir/program.hex"
 file mkdir "$proj_dir/riscv_sume.runs/synth_1"
 file copy -force "$root/testprog/hex/led.hex" "$proj_dir/riscv_sume.runs/synth_1/program.hex"
 
-# 4) é¡¶å±‚ä¸çº¦æŸ
+# 4) ¶¥²ãÓëÔ¼Êø
 set_property top fpga_top [current_fileset]
 read_xdc "$root/fpga/constraints/sume.xdc"
 
-# 5) ç»¼åˆ -> å®ç° -> æ¯”ç‰¹æµ
-#ï¼ˆVivado 2019.1 ç”¨é»˜è®¤ç»¼åˆç­–ç•¥å³å¯ï¼Œæ— éœ€ Performance_Exploreï¼‰
-# imem ç¨‹åºé€šè¿‡å®ç»å¯¹è·¯å¾„åŠ è½½ï¼ˆå€¼ä¸å¸¦å¼•å·ï¼Œé¿å… MORE_OPTIONS è§£æå¤±è´¥ï¼‰
+# 5) ×ÛºÏ -> ÊµÏÖ -> ±ÈÌØÁ÷
+#£¨Vivado 2019.1 ÓÃÄ¬ÈÏ×ÛºÏ²ßÂÔ¼´¿É£¬ÎŞĞè Performance_Explore£©
+# imem ³ÌĞòÍ¨¹ıºê¾ø¶ÔÂ·¾¶¼ÓÔØ£¨Öµ²»´øÒıºÅ£¬±ÜÃâ MORE_OPTIONS ½âÎöÊ§°Ü£©
 set_property STEPS.SYNTH_DESIGN.ARGS.MORE_OPTIONS {-verilog_define PROGRAM_HEX=D:/my_project/RISC-V/fpga/vivado_sume/program.hex} [get_runs synth_1]
 launch_runs synth_1 -jobs 8
 wait_on_run synth_1
@@ -67,5 +67,5 @@ if {[get_property PROGRESS [get_runs impl_1]] != "100%"} {
 }
 
 puts "=== SUME BUILD OK ==="
-# write_bitstream é»˜è®¤è¾“å‡ºä»¥é¡¶å±‚æ¨¡å—å‘½å
+# write_bitstream Ä¬ÈÏÊä³öÒÔ¶¥²ãÄ£¿éÃüÃû
 puts "Bitstream: $proj_dir/riscv_sume.runs/impl_1/fpga_top.bit"

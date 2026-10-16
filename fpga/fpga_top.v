@@ -1,37 +1,37 @@
 // ============================================================================
-// fpga_top.v â€”â€” FPGA é¡¶å±‚ï¼ˆZedBoard / AC7021B / NetFPGA SUME é€šç”¨ï¼Œparameter åŒ–ï¼‰
+// fpga_top.v ¡ª¡ª FPGA ¶¥²ã£¨ZedBoard / AC7021B / NetFPGA SUME Í¨ÓÃ£¬parameter »¯£©
 // ----------------------------------------------------------------------------
-// å°†äº”çº§æµæ°´çº¿ CPU ä¸æ¿çº§å¤–è®¾è¿æ¥ï¼š
-//   - æ¿è½½æ—¶é’Ÿç›´æ¥é©±åŠ¨ CPUï¼ˆZedBoard 33.333MHz / AC7021B 50MHz / SUME å¾…å®šï¼‰
-//   - å¤ä½ï¼šå¤–éƒ¨å¤ä½æŒ‰é’®ï¼ˆé«˜æœ‰æ•ˆï¼‰+ å†…éƒ¨ä¸Šç”µå¤ä½ï¼ˆçº¦ 16 å‘¨æœŸï¼‰ï¼Œä¸¤è€…ç›¸æˆ–
-//   - MMIO æ¼”ç¤ºï¼šCPU å†™ 0xF0000000 æ—¶ï¼Œè¾“å‡ºåˆ°æ¿è½½ LED
+// ½«Îå¼¶Á÷Ë®Ïß CPU Óë°å¼¶ÍâÉèÁ¬½Ó£º
+//   - °åÔØÊ±ÖÓÖ±½ÓÇı¶¯ CPU£¨ZedBoard 33.333MHz / AC7021B 50MHz / SUME ´ı¶¨£©
+//   - ¸´Î»£ºÍâ²¿¸´Î»°´Å¥£¨¸ßÓĞĞ§£©+ ÄÚ²¿ÉÏµç¸´Î»£¨Ô¼ 16 ÖÜÆÚ£©£¬Á½ÕßÏà»ò
+//   - MMIO ÑİÊ¾£ºCPU Ğ´ 0xF0000000 Ê±£¬Êä³öµ½°åÔØ LED
 //
-// å‚æ•°ï¼š
-//   LED_W          LED æ•°é‡ï¼ˆZedBoard 8ï¼›AC7021B 1ï¼‰
-//   LED_ACTIVE_LOW LED ææ€§ï¼ˆ0=é«˜ç”µå¹³ç‚¹äº® ZedBoardï¼›1=ä½ç”µå¹³ç‚¹äº® AC7021Bï¼‰
-// æ— å¤–éƒ¨å¤ä½çš„æ¿å­ï¼ˆAC7021Bï¼‰ç”± wrapper å°† btn_rst æ¥ 1'b0ã€‚
+// ²ÎÊı£º
+//   LED_W          LED ÊıÁ¿£¨ZedBoard 8£»AC7021B 1£©
+//   LED_ACTIVE_LOW LED ¼«ĞÔ£¨0=¸ßµçÆ½µãÁÁ ZedBoard£»1=µÍµçÆ½µãÁÁ AC7021B£©
+// ÎŞÍâ²¿¸´Î»µÄ°å×Ó£¨AC7021B£©ÓÉ wrapper ½« btn_rst ½Ó 1'b0¡£
 //
-// è¯´æ˜ï¼š
-//   - imem é€šè¿‡ $readmemh åŠ è½½ç¨‹åºï¼ˆä»¿çœŸï¼šprogram.hexï¼›ç»¼åˆï¼šå·¥ç¨‹ç›®å½•/è¿è¡Œç›®å½•çš„ program.hexï¼‰
-//   - æµæ°´çº¿ CPU è‡ªå¸¦ MMIO è§‚å¯Ÿç«¯å£ï¼ˆio_write/io_wdataï¼Œè§ riscv_pipeline.vï¼‰
+// ËµÃ÷£º
+//   - imem Í¨¹ı $readmemh ¼ÓÔØ³ÌĞò£¨·ÂÕæ£ºprogram.hex£»×ÛºÏ£º¹¤³ÌÄ¿Â¼/ÔËĞĞÄ¿Â¼µÄ program.hex£©
+//   - Á÷Ë®Ïß CPU ×Ô´ø MMIO ¹Û²ì¶Ë¿Ú£¨io_write/io_wdata£¬¼û riscv_pipeline.v£©
 // ============================================================================
 module fpga_top #(
-    parameter LED_W          = 8,   // ZedBoardï¼š8 ä¸ª LED
-    parameter LED_ACTIVE_LOW = 0    // 0=é«˜ç”µå¹³ç‚¹äº®ï¼ˆZedBoardï¼‰ï¼›1=ä½ç”µå¹³ç‚¹äº®ï¼ˆAC7021Bï¼‰
+    parameter LED_W          = 8,   // ZedBoard£º8 ¸ö LED
+    parameter LED_ACTIVE_LOW = 0    // 0=¸ßµçÆ½µãÁÁ£¨ZedBoard£©£»1=µÍµçÆ½µãÁÁ£¨AC7021B£©
 ) (
-    input  wire           clk,      // æ¿è½½æ—¶é’Ÿ
-    input  wire           btn_rst,  // å¤ä½æŒ‰é’®ï¼ˆé«˜æœ‰æ•ˆï¼‰ï¼›æ— å¤–éƒ¨å¤ä½æ—¶æ¥ 1'b0
-    output wire [LED_W-1:0] led     // æ¿è½½ LED
+    input  wire           clk,      // °åÔØÊ±ÖÓ
+    input  wire           btn_rst,  // ¸´Î»°´Å¥£¨¸ßÓĞĞ§£©£»ÎŞÍâ²¿¸´Î»Ê±½Ó 1'b0
+    output wire [LED_W-1:0] led     // °åÔØ LED
 );
 
-    // ---- å†…éƒ¨ä¸Šç”µå¤ä½ï¼šçº¦ 16 å‘¨æœŸ ----
+    // ---- ÄÚ²¿ÉÏµç¸´Î»£ºÔ¼ 16 ÖÜÆÚ ----
     reg [4:0] rst_cnt;
     always @(posedge clk) begin
         if (rst_cnt != 5'd31) rst_cnt <= rst_cnt + 1'b1;
     end
     wire reset = btn_rst | (rst_cnt < 5'd16);
 
-    // ---- CPU ä¿¡å· ----
+    // ---- CPU ĞÅºÅ ----
     wire [31:0] pc, instr;
     wire        io_write;
     wire [31:0] io_wdata;
@@ -45,8 +45,8 @@ module fpga_top #(
         .io_wdata (io_wdata)
     );
 
-    // ---- MMIOï¼šLED å¯„å­˜å™¨ ----
-    // CPU å‘ 0xF0000000 å†™å€¼æ—¶ï¼Œio_write=1ã€io_wdata æºå¸¦æ•°æ®
+    // ---- MMIO£ºLED ¼Ä´æÆ÷ ----
+    // CPU Ïò 0xF0000000 Ğ´ÖµÊ±£¬io_write=1¡¢io_wdata Ğ¯´øÊı¾İ
     reg [LED_W-1:0] led_r;
     always @(posedge clk or posedge reset) begin
         if (reset)
@@ -56,11 +56,11 @@ module fpga_top #(
     end
     generate
         if (LED_ACTIVE_LOW) begin : g_led_low
-            // AC7021B LED2 ä½ç”µå¹³ç‚¹äº®ï¼ˆé˜³ææ¥ 3.3Vï¼‰
+            // AC7021B LED2 µÍµçÆ½µãÁÁ£¨Ñô¼«½Ó 3.3V£©
             assign led = ~led_r;
         end
         else begin : g_led_high
-            // ZedBoard LED é«˜ç”µå¹³ç‚¹äº®
+            // ZedBoard LED ¸ßµçÆ½µãÁÁ
             assign led = led_r;
         end
     endgenerate

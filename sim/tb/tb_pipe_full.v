@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 // ============================================================================
-// tb_pipe_full.v - RV32I å…¨æŒ‡ä»¤é›†ç³»ç»Ÿçº§æµ‹è¯•ï¼ˆäº”çº§æµæ°´çº¿ï¼‰
-// è¿è¡Œ full.sï¼Œæ£€æŸ¥ DMEM[0x300..0x3BC]ï¼Œå«é™·é˜±ï¼ˆä¸åº”æ‰§è¡Œè·¯å¾„ï¼‰æ£€æŸ¥
+// tb_pipe_full.v - RV32I È«Ö¸Áî¼¯ÏµÍ³¼¶²âÊÔ£¨Îå¼¶Á÷Ë®Ïß£©
+// ÔËĞĞ full.s£¬¼ì²é DMEM[0x300..0x3BC]£¬º¬ÏİÚå£¨²»Ó¦Ö´ĞĞÂ·¾¶£©¼ì²é
 // ============================================================================
 module tb_pipe_full;
     reg        clk = 0;
@@ -58,28 +58,28 @@ module tb_pipe_full;
                      dut.dmem_i.mem[(32'h00000304) >> 2]);
             errors = errors + 1;
         end
-        // ---- 2. R å‹ç®—æœ¯ ----
+        // ---- 2. R ĞÍËãÊõ ----
         check_mem(32'h08, 32'h00000089, "add");    // 137
         check_mem(32'h0C, 32'h0000003F, "sub");    // 63
-        // ---- 3. R å‹ç§»ä½ ----
+        // ---- 3. R ĞÍÒÆÎ» ----
         check_mem(32'h10, 32'h00000010, "sll");
         check_mem(32'h14, 32'h08000000, "srl");
         check_mem(32'h18, 32'hF8000000, "sra");
         // ---- 4. slt / sltu ----
         check_mem(32'h1C, 32'h00000001, "slt");
         check_mem(32'h20, 32'h00000000, "sltu");
-        // ---- 5. é€»è¾‘ ----
+        // ---- 5. Âß¼­ ----
         check_mem(32'h24, 32'h00000000, "and");
         check_mem(32'h28, 32'hFFFFFFFF, "or");
         check_mem(32'h2C, 32'hFFFFFFFF, "xor");
-        // ---- 6. I å‹ç«‹å³æ•° ----
+        // ---- 6. I ĞÍÁ¢¼´Êı ----
         check_mem(32'h30, 32'h00000005, "addi");
         check_mem(32'h34, 32'h00000001, "slti");
         check_mem(32'h38, 32'h00000001, "sltiu");
         check_mem(32'h3C, 32'h000000F5, "xori");
         check_mem(32'h40, 32'h000000FA, "ori");
         check_mem(32'h44, 32'h0000000A, "andi");
-        // ---- 7. ç§»ä½ç«‹å³æ•° ----
+        // ---- 7. ÒÆÎ»Á¢¼´Êı ----
         check_mem(32'h48, 32'h00000008, "slli");
         check_mem(32'h4C, 32'h10000000, "srli");
         check_mem(32'h50, 32'hF0000000, "srai");
@@ -93,7 +93,7 @@ module tb_pipe_full;
         check_mem(32'h6C, 32'h000000DD, "sb");
         check_mem(32'h70, 32'h00003344, "sh");
         check_mem(32'h74, 32'hDEADBEEF, "sw");
-        // ---- 9. åˆ†æ”¯ï¼ˆåç§»ä¸ full.s ä¸€ä¸€å¯¹åº”ï¼‰----
+        // ---- 9. ·ÖÖ§£¨Æ«ÒÆÓë full.s Ò»Ò»¶ÔÓ¦£©----
         check_mem(32'h7C, 32'h00000005, "beq");
         check_mem(32'h80, 32'h00000000, "trap_bne");
         check_mem(32'h84, 32'h00000005, "bne");
@@ -112,7 +112,7 @@ module tb_pipe_full;
         check_mem(32'hB4, 32'h000001FC, "jalr_link");
         check_mem(32'hB8, 32'h00000000, "trap_jalr2");
         check_mem(32'hBC, 32'h00000001, "jalr_done");
-        // ---- é™·é˜±æ£€æŸ¥ï¼ˆä¸åº”æ‰§è¡Œè·¯å¾„ï¼‰----
+        // ---- ÏİÚå¼ì²é£¨²»Ó¦Ö´ĞĞÂ·¾¶£©----
         check_mem(32'h78, 32'h00000000, "trap_beq");    // 120
         if (errors == 0)
             $display("TEST PASSED (pipe_full)");

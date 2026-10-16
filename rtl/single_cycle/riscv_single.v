@@ -1,8 +1,8 @@
 `timescale 1ns/1ps
 // ============================================================================
-// riscv_single.v - RV32I å•å‘¨æœŸå¤„ç†å™¨ï¼ˆæ•™æç¬¬ 7 ç« ç»“æ„ï¼‰
-// æ•°æ®é€šè·¯ï¼šPC -> IMEM -> è¯‘ç  -> å¯„å­˜å™¨å † -> ALU -> DMEM -> å†™å›
-// æ”¯æŒ RV32I å…¨é›†ï¼ˆæ•´æ•°æŒ‡ä»¤ï¼‰ï¼Œåˆ†æ”¯åœ¨ç»„åˆé€»è¾‘ä¸­åˆ¤å®š
+// riscv_single.v - RV32I µ¥ÖÜÆÚ´¦ÀíÆ÷£¨½Ì²ÄµÚ 7 ÕÂ½á¹¹£©
+// Êı¾İÍ¨Â·£ºPC -> IMEM -> ÒëÂë -> ¼Ä´æÆ÷¶Ñ -> ALU -> DMEM -> Ğ´»Ø
+// Ö§³Ö RV32I È«¼¯£¨ÕûÊıÖ¸Áî£©£¬·ÖÖ§ÔÚ×éºÏÂß¼­ÖĞÅĞ¶¨
 // ============================================================================
 module riscv_single (
     input        clk,
@@ -14,7 +14,7 @@ module riscv_single (
     output wire [31:0] writedata,
     output wire [31:0] readdata
 );
-    // ---- æŒ‡ä»¤å­—æ®µ ----
+    // ---- Ö¸Áî×Ö¶Î ----
     wire [6:0]  opcode = instr[6:0];
     wire [4:0]  rs1    = instr[19:15];
     wire [4:0]  rs2    = instr[24:20];
@@ -22,7 +22,7 @@ module riscv_single (
     wire [2:0]  funct3 = instr[14:12];
     wire [6:0]  funct7 = instr[31:25];
 
-    // ---- å†…éƒ¨çº¿ç½‘ ----
+    // ---- ÄÚ²¿ÏßÍø ----
     wire [31:0] pcnext, pcplus4;
     wire [31:0] rd1, rd2;
     wire [31:0] immext, srca, srcb;
@@ -35,17 +35,17 @@ module riscv_single (
     wire [31:0] write_data;
     wire [31:0] jump_target;
 
-    // ---- å–æŒ‡ ----
+    // ---- È¡Ö¸ ----
     flopr #(.W(32)) pcreg (.clk(clk), .reset(reset), .d(pcnext), .q(pc));
     imem imem_i (.a(pc), .rd(instr));
     assign pcplus4 = pc + 32'd4;
 
-    // ---- å¯„å­˜å™¨å † ----
+    // ---- ¼Ä´æÆ÷¶Ñ ----
     regfile rf (.clk(clk), .we3(regwrite), .a1(rs1), .a2(rs2), .a3(rd),
                 .wd3(write_data), .rd1(rd1), .rd2(rd2));
     assign writedata = rd2;
 
-    // ---- ç«‹å³æ•°æ‰©å±• ----
+    // ---- Á¢¼´ÊıÀ©Õ¹ ----
     extend ext (.instr(instr[31:7]), .immsrc(immsrc), .immext(immext));
 
     // ---- ALU ----
@@ -54,24 +54,24 @@ module riscv_single (
     alu alu_i (.a(srca), .b(srcb), .alucontrol(alucontrol), .result(result), .zero());
     assign alu_result = result;
 
-    // ---- æ•°æ®å†…å­˜ ----
+    // ---- Êı¾İÄÚ´æ ----
     dmem dmem_i (.clk(clk), .we(memwrite_i), .funct3(funct3), .a(result),
                  .wd(rd2), .rd(readdata));
     assign memwrite = memwrite_i;
 
-    // ---- å†™å› ----
+    // ---- Ğ´»Ø ----
     mux4 #(.W(32)) muxwb (.d0(result), .d1(readdata), .d2(pcplus4), .d3(32'b0),
                           .s(resultsrc), .y(write_data));
 
-    // ---- æ§åˆ¶ä¸åˆ†æ”¯ ----
+    // ---- ¿ØÖÆÓë·ÖÖ§ ----
     control_unit cu (.opcode(opcode), .funct3(funct3), .funct7(funct7),
                      .regwrite(regwrite), .alusrca(alusrca), .alusrcb(alusrcb),
                      .memwrite(memwrite_i), .resultsrc(resultsrc), .branch(branch),
                      .jump(jump), .aluop(aluop), .immsrc(immsrc), .alucontrol(alucontrol));
     branch_unit bu (.rs1(rd1), .rs2(rd2), .funct3(funct3), .taken(taken));
 
-    // ---- PC æ›´æ–° ----
+    // ---- PC ¸üĞÂ ----
     assign pcsrc = (branch & taken) | jump;
-    assign jump_target = (opcode == 7'b1100111) ? {result[31:1], 1'b0} : result; // jalr ç›®æ ‡å¯¹é½
+    assign jump_target = (opcode == 7'b1100111) ? {result[31:1], 1'b0} : result; // jalr Ä¿±ê¶ÔÆë
     mux2 #(.W(32)) muxpc (.d0(pcplus4), .d1(jump_target), .s(pcsrc), .y(pcnext));
 endmodule

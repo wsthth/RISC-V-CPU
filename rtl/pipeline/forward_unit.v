@@ -1,24 +1,24 @@
 `timescale 1ns/1ps
 // ============================================================================
-// forward_unit.v - æ•°æ®æ—è·¯è½¬å‘å•å…ƒ
-// ForwardAE/BEï¼ˆ2-bitï¼‰ï¼š
-//   00 = æ— è½¬å‘ï¼ˆå–å¯„å­˜å™¨å †åŽŸå€¼ï¼‰
-//   01 = ä»Ž MEM/WB è½¬å‘ï¼ˆEX/MEM -> EX å‰ 1 å‘¨æœŸç»“æžœï¼‰
-//   10 = ä»Ž EX/MEM è½¬å‘ï¼ˆMEM/WB -> EX å‰ 2 å‘¨æœŸç»“æžœï¼‰
-// ä¼˜å…ˆçº§ï¼šEX/MEMï¼ˆæ›´æ–°çš„ç»“æžœï¼‰ä¼˜å…ˆäºŽ MEM/WB
+// forward_unit.v - Êý¾ÝÅÔÂ·×ª·¢µ¥Ôª
+// ForwardAE/BE£¨2-bit£©£º
+//   00 = ÎÞ×ª·¢£¨È¡¼Ä´æÆ÷¶ÑÔ­Öµ£©
+//   01 = ´Ó MEM/WB ×ª·¢£¨EX/MEM -> EX Ç° 1 ÖÜÆÚ½á¹û£©
+//   10 = ´Ó EX/MEM ×ª·¢£¨MEM/WB -> EX Ç° 2 ÖÜÆÚ½á¹û£©
+// ÓÅÏÈ¼¶£ºEX/MEM£¨¸üÐÂµÄ½á¹û£©ÓÅÏÈÓÚ MEM/WB
 // ============================================================================
 module forward_unit (
     input  [4:0] rs1_e,
     input  [4:0] rs2_e,
-    input  [4:0] rdm,        // EX/MEM æ®µç›®æ ‡å¯„å­˜å™¨
-    input  [4:0] rdw,        // MEM/WB æ®µç›®æ ‡å¯„å­˜å™¨
-    input        regwrite_m, // EX/MEM æ®µå†™ä½¿èƒ½
-    input        regwrite_w, // MEM/WB æ®µå†™ä½¿èƒ½
+    input  [4:0] rdm,        // EX/MEM ¶ÎÄ¿±ê¼Ä´æÆ÷
+    input  [4:0] rdw,        // MEM/WB ¶ÎÄ¿±ê¼Ä´æÆ÷
+    input        regwrite_m, // EX/MEM ¶ÎÐ´Ê¹ÄÜ
+    input        regwrite_w, // MEM/WB ¶ÎÐ´Ê¹ÄÜ
     output reg [1:0] forwardae,
     output reg [1:0] forwardbe
 );
     always @(*) begin
-        // Forward Aï¼ˆrs1ï¼‰
+        // Forward A£¨rs1£©
         if (regwrite_m && (rdm != 5'b0) && (rdm == rs1_e))
             forwardae = 2'b10;
         else if (regwrite_w && (rdw != 5'b0) && (rdw == rs1_e))
@@ -26,7 +26,7 @@ module forward_unit (
         else
             forwardae = 2'b00;
 
-        // Forward Bï¼ˆrs2ï¼‰
+        // Forward B£¨rs2£©
         if (regwrite_m && (rdm != 5'b0) && (rdm == rs2_e))
             forwardbe = 2'b10;
         else if (regwrite_w && (rdw != 5'b0) && (rdw == rs2_e))

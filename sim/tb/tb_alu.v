@@ -1,5 +1,5 @@
 // ============================================================================
-// tb_alu.v - ALU Ê®°ÂùóÊµãËØï
+// tb_alu.v - ALU ƒ£øÈ≤‚ ‘
 // ============================================================================
 `timescale 1ns/1ps
 module tb_alu;
@@ -29,23 +29,23 @@ module tb_alu;
         a = 32'h00000005; b = 32'h00000007; ctrl = 4'b0000; #10; check(32'h0000000C, "ADD");
         // SUB
         a = 32'h00000007; b = 32'h00000005; ctrl = 4'b0001; #10; check(32'h00000002, "SUB");
-        // Ë¥üÊï∞Ôºö0 - 1
+        // ∏∫ ˝£∫0 - 1
         a = 32'h0; b = 32'h1; ctrl = 4'b0001; #10; check(32'hFFFFFFFF, "SUB-neg");
         // AND / OR / XOR
         a = 32'h0000FF00; b = 32'h0F0F0F0F; ctrl = 4'b0010; #10; check(32'h00000F00, "AND");
         a = 32'h0000FF00; b = 32'h0F0F0F0F; ctrl = 4'b0011; #10; check(32'h0F0FFF0F, "OR");
         a = 32'h0000FF00; b = 32'h0F0F0F0F; ctrl = 4'b0100; #10; check(32'h0F0FF00F, "XOR");
-        // Áßª‰Ωç
+        // “∆Œª
         a = 32'h80000001; b = 32'd4; ctrl = 4'b0101; #10; check(32'h00000010, "SLL");
         a = 32'h80000001; b = 32'd4; ctrl = 4'b0110; #10; check(32'h08000000, "SRL");
         a = 32'h80000001; b = 32'd4; ctrl = 4'b0111; #10; check(32'hF8000000, "SRA");
-        // ÊØîËæÉ
+        // ±»Ωœ
         a = 32'hFFFFFFFF; b = 32'h00000001; ctrl = 4'b1000; #10; check(32'h1, "SLT");
         a = 32'hFFFFFFFF; b = 32'h00000001; ctrl = 4'b1001; #10; check(32'h0, "SLTU");
         a = 32'h00000001; b = 32'hFFFFFFFF; ctrl = 4'b1001; #10; check(32'h1, "SLTU-2");
         // LUI
         a = 32'h0; b = 32'h00012345; ctrl = 4'b1010; #10; check(32'h12345000, "LUI");
-        // zero Ê†áÂøó
+        // zero ±Í÷æ
         a = 32'h5; b = 32'h5; ctrl = 4'b0001; #10;
         if (!zero) begin $display("FAIL ZERO flag"); errors = errors + 1; end
         if (errors == 0)

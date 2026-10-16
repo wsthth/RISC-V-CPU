@@ -1,19 +1,19 @@
 # ============================================================================
-# ZedBoard çº¦æŸæ–‡ä»¶ï¼ˆxc7z020clg484-1ï¼‰
+# ZedBoard Ô¼ÊøÎÄ¼ş£¨xc7z020clg484-1£©
 # ----------------------------------------------------------------------------
-# å¼•è„šå–è‡ª Vivado 2019.1 è‡ªå¸¦ ZedBoard æ¿å¡æ–‡ä»¶
-#   (D:\Xilinx\Vivado\2019.1\data\boards\board_files\zed\1.4\part0_pins.xml)ï¼š
-#   - ç³»ç»Ÿæ—¶é’Ÿ sys_clk 33.333MHzï¼šY9ï¼ˆLVCMOS33ï¼‰
-#   - æŒ‰é’® btns_5bits_tri_i_0ï¼ˆBTNC ä¸­å¿ƒé”®ï¼ŒæŒ‰ä¸‹=é«˜ï¼‰ï¼šP16ï¼ˆLVCMOS25ï¼‰
-#   - LED0..LED7ï¼šT22 T21 U22 U21 V22 W22 U19 U14ï¼ˆLVCMOS33ï¼‰
+# Òı½ÅÈ¡×Ô Vivado 2019.1 ×Ô´ø ZedBoard °å¿¨ÎÄ¼ş
+#   (D:\Xilinx\Vivado\2019.1\data\boards\board_files\zed\1.4\part0_pins.xml)£º
+#   - ÏµÍ³Ê±ÖÓ sys_clk 33.333MHz£ºY9£¨LVCMOS33£©
+#   - °´Å¥ btns_5bits_tri_i_0£¨BTNC ÖĞĞÄ¼ü£¬°´ÏÂ=¸ß£©£ºP16£¨LVCMOS25£©
+#   - LED0..LED7£ºT22 T21 U22 U21 V22 W22 U19 U14£¨LVCMOS33£©
 # ============================================================================
 
-## æ—¶é’Ÿï¼š33.333MHz
+## Ê±ÖÓ£º33.333MHz
 set_property PACKAGE_PIN Y9   [get_ports clk]
 set_property IOSTANDARD LVCMOS33 [get_ports clk]
 create_clock -period 30.000 -name clk [get_ports clk]
 
-## å¤ä½æŒ‰é’® BTNCï¼ˆæŒ‰ä¸‹ä¸ºé«˜ç”µå¹³ï¼Œæ¥é«˜æœ‰æ•ˆå¼‚æ­¥å¤ä½ï¼‰
+## ¸´Î»°´Å¥ BTNC£¨°´ÏÂÎª¸ßµçÆ½£¬½Ó¸ßÓĞĞ§Òì²½¸´Î»£©
 set_property PACKAGE_PIN P16  [get_ports btn_rst]
 set_property IOSTANDARD LVCMOS25 [get_ports btn_rst]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_ports btn_rst]

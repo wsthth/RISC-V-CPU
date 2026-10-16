@@ -24,7 +24,7 @@ module alu #(parameter W = 32) (
             4'b0111: result = $signed(a) >>> b[4:0];
             4'b1000: result = ($signed(a) < $signed(b)) ? 32'b1 : 32'b0;
             4'b1001: result = (a < b) ? 32'b1 : 32'b0;
-            4'b1010: result = b;                 // luiï¼šB å·²æ˜¯ {imm[31:12],12'b0}ï¼Œç›´æ¥è¾“å‡º
+            4'b1010: result = b;                 // lui£ºB ÒÑÊÇ {imm[31:12],12'b0}£¬Ö±½ÓÊä³ö
             default: result = a + b;
         endcase
     end

@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-// tb_pipe_ex.v - 鎵撳嵃 EX 娈佃瘧鐮佺粏鑺傦紙aluop/alucontrol/杈撳叆/杈撳嚭锛夛紝瀹氫綅 lui 闂
+// tb_pipe_ex.v - 打印 EX 段译码细节（aluop/alucontrol/输入/输出），定位 lui 问题
 module tb_pipe_ex;
     reg        clk = 0;
     reg        reset = 1;

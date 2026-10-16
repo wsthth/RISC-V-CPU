@@ -1,22 +1,22 @@
 // ============================================================================
-// fpga_top_ac7021b.v —— ALINX AC7021B 顶层（薄 wrapper）
+// fpga_top_ac7021b.v ���� ALINX AC7021B ���㣨�� wrapper��
 // ----------------------------------------------------------------------------
-// AC7021B 核心板板级特性：
-//   - 1 个 PL 用户 LED（LED2/R7），低电平点亮
-//   - 无 PL 复位按键（核心板 RESET 键连 PS_POR_B，PL 用内部上电复位）
-//   - PL 时钟 50MHz（Y9）
-// 约束见 fpga/constraints/ac7021b.xdc，综合见 fpga/scripts/build_ac7021b.tcl
+// AC7021B ���İ�弶���ԣ�
+//   - 1 �� PL �û� LED��LED2/R7�����͵�ƽ����
+//   - �� PL ��λ���������İ� RESET ���� PS_POR_B��PL ���ڲ��ϵ縴λ��
+//   - PL ʱ�� 50MHz��Y9��
+// Լ���� fpga/constraints/ac7021b.xdc���ۺϼ� fpga/scripts/build_ac7021b.tcl
 // ============================================================================
 module fpga_top_ac7021b (
-    input  wire clk,      // PL 系统时钟 50MHz（Y9）
-    output wire led       // 用户 LED2（R7，低电平点亮）
+    input  wire clk,      // PL ϵͳʱ�� 50MHz��Y9��
+    output wire led       // �û� LED2��R7���͵�ƽ������
 );
     fpga_top #(
-        .LED_W          (1),   // 1 个 PL LED
-        .LED_ACTIVE_LOW (1)    // 低电平点亮
+        .LED_W          (1),   // 1 �� PL LED
+        .LED_ACTIVE_LOW (1)    // �͵�ƽ����
     ) u_fpga_top (
         .clk      (clk),
-        .btn_rst  (1'b0),      // 无外部复位，内部上电复位
+        .btn_rst  (1'b0),      // ���ⲿ��λ���ڲ��ϵ縴λ
         .led      (led)
     );
 endmodule

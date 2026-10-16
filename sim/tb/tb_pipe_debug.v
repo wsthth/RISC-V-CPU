@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-// tb_pipe_debug.v - é€å‘¨æœŸæ‰“å° EX æ®µæŒ‡ä»¤æ‰§è¡Œè½¨è¿¹ï¼ˆå®šä½æµæ°´çº¿ bugï¼‰
+// tb_pipe_debug.v - ÖğÖÜÆÚ´òÓ¡ EX ¶ÎÖ¸ÁîÖ´ĞĞ¹ì¼££¨¶¨Î»Á÷Ë®Ïß bug£©
 module tb_pipe_debug;
     reg        clk = 0;
     reg        reset = 1;
@@ -16,7 +16,7 @@ module tb_pipe_debug;
 
     always #5 clk = ~clk;
 
-    // EX æ®µè§‚å¯Ÿ
+    // EX ¶Î¹Û²ì
     wire [31:0] ex_pc     = dut.pc_e;
     wire [4:0]  ex_rs1    = dut.rs1_e;
     wire [4:0]  ex_rs2    = dut.rs2_e;

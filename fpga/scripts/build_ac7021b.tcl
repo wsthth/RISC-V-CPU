@@ -1,9 +1,9 @@
 # ============================================================================
-# build_ac7021b.tcl â€”â€” ALINX AC7021B (xc7z020clg484-1) ä¸€é”®å»ºå·¥ç¨‹/ç»¼åˆ/å®ç°/æ¯”ç‰¹æµ
-# ç”¨æ³•ï¼ˆWindows å‘½ä»¤è¡Œï¼Œåœ¨ fpga\scripts ç›®å½•ï¼‰ï¼š
+# build_ac7021b.tcl ¡ª¡ª ALINX AC7021B (xc7z020clg484-1) Ò»¼ü½¨¹¤³Ì/×ÛºÏ/ÊµÏÖ/±ÈÌØÁ÷
+# ÓÃ·¨£¨Windows ÃüÁîĞĞ£¬ÔÚ fpga\scripts Ä¿Â¼£©£º
 #   D:\Xilinx\Vivado\2019.1\bin\vivado.bat -mode batch -source build_ac7021b.tcl
-# äº§ç‰©ï¼š..\vivado_ac7021b\riscv_ac7021b.runs\impl_1\fpga_top.bit
-# æ¿çº§é€‚é…ï¼š-verilog_define AC7021Bï¼ˆ1 ä¸ª LED ä½ç”µå¹³ç‚¹äº®ã€æ— å¤–éƒ¨å¤ä½ã€50MHzï¼‰
+# ²úÎï£º..\vivado_ac7021b\riscv_ac7021b.runs\impl_1\fpga_top.bit
+# °å¼¶ÊÊÅä£º-verilog_define AC7021B£¨1 ¸ö LED µÍµçÆ½µãÁÁ¡¢ÎŞÍâ²¿¸´Î»¡¢50MHz£©
 # ============================================================================
 
 set root "D:/my_project/RISC-V"
@@ -12,10 +12,10 @@ set part   xc7z020clg484-1
 
 file delete -force $proj_dir
 
-# 1) å»ºå·¥ç¨‹
+# 1) ½¨¹¤³Ì
 create_project riscv_ac7021b $proj_dir -part $part -force
 
-# 2) æ·»åŠ  RTLï¼ˆcommon + single_cycle + pipeline + fpga_topï¼‰
+# 2) Ìí¼Ó RTL£¨common + single_cycle + pipeline + fpga_top£©
 add_files [list \
     "$root/rtl/common/alu.v" \
     "$root/rtl/common/regfile.v" \
@@ -36,18 +36,18 @@ add_files [list \
     "$root/fpga/fpga_top_ac7021b.v" \
 ]
 
-# 3) å¤åˆ¶æµ‹è¯•ç¨‹åº hexï¼š$readmemh åœ¨ç»¼åˆæ—¶æŒ‰ <å·¥ç¨‹>.runs/synth_1 ç›®å½•è§£æ
+# 3) ¸´ÖÆ²âÊÔ³ÌĞò hex£º$readmemh ÔÚ×ÛºÏÊ±°´ <¹¤³Ì>.runs/synth_1 Ä¿Â¼½âÎö
 set run_dir [pwd]
 file copy -force "$root/testprog/hex/led.hex" "$proj_dir/program.hex"
 file mkdir "$proj_dir/riscv_ac7021b.runs/synth_1"
 file copy -force "$root/testprog/hex/led.hex" "$proj_dir/riscv_ac7021b.runs/synth_1/program.hex"
 
-# 4) é¡¶å±‚ä¸çº¦æŸ
+# 4) ¶¥²ãÓëÔ¼Êø
 set_property top fpga_top_ac7021b [current_fileset]
 read_xdc "$root/fpga/constraints/ac7021b.xdc"
 
-# 5) ç»¼åˆ -> å®ç° -> æ¯”ç‰¹æµ
-#ï¼ˆimem ç¨‹åºé å¤åˆ¶åˆ°ç»¼åˆè¿›ç¨‹ cwd çš„ program.hexï¼‰
+# 5) ×ÛºÏ -> ÊµÏÖ -> ±ÈÌØÁ÷
+#£¨imem ³ÌĞò¿¿¸´ÖÆµ½×ÛºÏ½ø³Ì cwd µÄ program.hex£©
 launch_runs synth_1 -jobs 8
 wait_on_run synth_1
 if {[get_property PROGRESS [get_runs synth_1]] != "100%"} {
@@ -61,5 +61,5 @@ if {[get_property PROGRESS [get_runs impl_1]] != "100%"} {
 }
 
 puts "=== AC7021B BUILD OK ==="
-# write_bitstream é»˜è®¤è¾“å‡ºä»¥é¡¶å±‚æ¨¡å—å‘½å
+# write_bitstream Ä¬ÈÏÊä³öÒÔ¶¥²ãÄ£¿éÃüÃû
 puts "Bitstream: $proj_dir/riscv_ac7021b.runs/impl_1/fpga_top.bit"

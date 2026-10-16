@@ -1,0 +1,89 @@
+﻿== xvlog ==
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/common/alu.v" into library work
+INFO: [VRFC 10-311] analyzing module alu
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/common/branch_unit.v" into library work
+INFO: [VRFC 10-311] analyzing module branch_unit
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/common/dmem.v" into library work
+INFO: [VRFC 10-311] analyzing module dmem
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/common/extend.v" into library work
+INFO: [VRFC 10-311] analyzing module extend
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/common/flopr.v" into library work
+INFO: [VRFC 10-311] analyzing module flopr
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/common/imem.v" into library work
+INFO: [VRFC 10-311] analyzing module imem
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/common/muxes.v" into library work
+INFO: [VRFC 10-311] analyzing module mux2
+INFO: [VRFC 10-311] analyzing module mux3
+INFO: [VRFC 10-311] analyzing module mux4
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/common/regfile.v" into library work
+INFO: [VRFC 10-311] analyzing module regfile
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/pipeline/branch_predictor.v" into library work
+INFO: [VRFC 10-311] analyzing module branch_predictor
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/pipeline/forward_unit.v" into library work
+INFO: [VRFC 10-311] analyzing module forward_unit
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/pipeline/hazard_unit.v" into library work
+INFO: [VRFC 10-311] analyzing module hazard_unit
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/pipeline/pipe_regs.v" into library work
+INFO: [VRFC 10-311] analyzing module reg_ifid
+INFO: [VRFC 10-311] analyzing module reg_idex
+INFO: [VRFC 10-311] analyzing module reg_exmem
+INFO: [VRFC 10-311] analyzing module reg_memwb
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/pipeline/riscv_pipeline.v" into library work
+INFO: [VRFC 10-311] analyzing module riscv_pipeline
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/single_cycle/control_unit.v" into library work
+INFO: [VRFC 10-311] analyzing module control_unit
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/rtl/single_cycle/riscv_single.v" into library work
+INFO: [VRFC 10-311] analyzing module riscv_single
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/my_project/RISC-V/sim/tb/tb_pipe_full.v" into library work
+INFO: [VRFC 10-311] analyzing module tb_pipe_full
+== xelab ==
+Vivado Simulator 2019.1
+Copyright 1986-1999, 2001-2019 Xilinx, Inc. All Rights Reserved.
+Running: D:/xilinx/Vivado/2019.1/bin/unwrapped/win64.o/xelab.exe -L work -debug typical tb_pipe_full -s sim_snapshot 
+Multi-threading is on. Using 26 slave threads.
+Starting static elaboration
+Completed static elaboration
+Starting simulation data flow analysis
+Completed simulation data flow analysis
+Time Resolution for simulation is 1ps
+Compiling module work.flopr
+Compiling module work.imem
+Compiling module work.reg_ifid
+Compiling module work.regfile
+Compiling module work.extend
+Compiling module work.control_unit
+Compiling module work.hazard_unit
+Compiling module work.reg_idex
+Compiling module work.forward_unit
+Compiling module work.mux3
+Compiling module work.mux2
+Compiling module work.alu
+Compiling module work.branch_unit
+Compiling module work.branch_predictor
+Compiling module work.reg_exmem
+Compiling module work.dmem
+Compiling module work.reg_memwb
+Compiling module work.mux4
+Compiling module work.riscv_pipeline
+Compiling module work.tb_pipe_full
+Built simulation snapshot sim_snapshot
+== xsim ==
+
+****** xsim v2019.1 (64-bit)
+  **** SW Build 2552052 on Fri May 24 14:49:42 MDT 2019
+  **** IP Build 2548770 on Fri May 24 18:01:18 MDT 2019
+    ** Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+
+source xsim.dir/sim_snapshot/xsim_script.tcl
+# xsim {sim_snapshot} -autoloadwcfg -tclbatch {run.tcl}
+Vivado Simulator 2019.1
+Time resolution is 1 ps
+source run.tcl
+## run all
+=== tb_pipe_full start ===
+cycles=156 halted=1 pc=00000224
+TEST PASSED (pipe_full)
+$finish called at time : 1605 ns : File "D:/my_project/RISC-V/sim/tb/tb_pipe_full.v" Line 121
+## quit
+INFO: [Common 17-206] Exiting xsim at Fri Oct 16 18:36:06 2026...
+>>> RESULT: PASS

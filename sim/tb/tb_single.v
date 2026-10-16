@@ -1,6 +1,6 @@
 // ============================================================================
-// tb_single.v - å•å‘¨æœŸ RV32I CPU æ•´æœºæµ‹è¯•
-// è¿è¡Œ basic.sï¼ˆè„šæœ¬å¤åˆ¶ä¸º program.hexï¼‰ï¼Œåœæœºåæ£€æŸ¥ DMEM[0x100..0x124]
+// tb_single.v - µ¥ÖÜÆÚ RV32I CPU Õû»ú²âÊÔ
+// ÔËĞĞ basic.s£¨½Å±¾¸´ÖÆÎª program.hex£©£¬Í£»úºó¼ì²é DMEM[0x100..0x124]
 // ============================================================================
 `timescale 1ns/1ps
 module tb_single;
@@ -36,10 +36,10 @@ module tb_single;
     initial begin
         $display("=== tb_single start ===");
         #10;
-        // å¤ä½ 4 å‘¨æœŸ
+        // ¸´Î» 4 ÖÜÆÚ
         repeat (4) @(posedge clk);
         reset = 0;
-        // è¿è¡Œç›´åˆ°åœæœºï¼ˆPC è¿ç»­ 5 å‘¨æœŸä¸å˜ = è‡ªç¯ï¼‰æˆ–è¶…æ—¶
+        // ÔËĞĞÖ±µ½Í£»ú£¨PC Á¬Ğø 5 ÖÜÆÚ²»±ä = ×Ô»·£©»ò³¬Ê±
         while (!halted && cycles < 1000) begin
             @(posedge clk);
             cycles = cycles + 1;
@@ -53,7 +53,7 @@ module tb_single;
             $display("TEST FAILED (single)");
             $finish;
         end
-        // æ£€æŸ¥ç»“æœ
+        // ¼ì²é½á¹û
         check_mem(32'h00000100, 32'h0000000D, "mem100");  // 13
         check_mem(32'h00000104, 32'h00000008, "mem104");  // 8
         check_mem(32'h00000108, 32'h00000005, "mem108");  // 5

@@ -1,16 +1,16 @@
 `timescale 1ns/1ps
 // ============================================================================
-// control_unit.v - ä¸»è¯‘ç å™¨ + ALU è¯‘ç å™¨
+// control_unit.v - Ö÷ÒëÂëÆ÷ + ALU ÒëÂëÆ÷
 //
-// æ§åˆ¶ä¿¡å·ï¼š
-//   regwrite  : å¯„å­˜å™¨å†™ä½¿èƒ½
-//   alusrca   : ALU æºAé€‰æ‹©ï¼ˆ0=rs1, 1=PCï¼Œç”¨äº auipc/åˆ†æ”¯/jalï¼‰
-//   alusrcb   : ALU æºBé€‰æ‹©ï¼ˆ0=rs2, 1=ç«‹å³æ•°ï¼‰
-//   memwrite  : æ•°æ®å†…å­˜å†™ä½¿èƒ½
-//   resultsrc : å†™å›æºï¼ˆ00=ALUç»“æœ, 01=å†…å­˜è¯»æ•°æ®, 10=PC+4ï¼‰
-//   branch    : æ˜¯å¦æ¡ä»¶åˆ†æ”¯ï¼ˆBå‹ï¼‰
-//   jump      : æ˜¯å¦æ— æ¡ä»¶è·³è½¬ï¼ˆjal/jalrï¼‰
-//   aluop     : 00=ADD  01=ç”±functè¯‘ç   10=LUI
+// ¿ØÖÆĞÅºÅ£º
+//   regwrite  : ¼Ä´æÆ÷Ğ´Ê¹ÄÜ
+//   alusrca   : ALU Ô´AÑ¡Ôñ£¨0=rs1, 1=PC£¬ÓÃÓÚ auipc/·ÖÖ§/jal£©
+//   alusrcb   : ALU Ô´BÑ¡Ôñ£¨0=rs2, 1=Á¢¼´Êı£©
+//   memwrite  : Êı¾İÄÚ´æĞ´Ê¹ÄÜ
+//   resultsrc : Ğ´»ØÔ´£¨00=ALU½á¹û, 01=ÄÚ´æ¶ÁÊı¾İ, 10=PC+4£©
+//   branch    : ÊÇ·ñÌõ¼ş·ÖÖ§£¨BĞÍ£©
+//   jump      : ÊÇ·ñÎŞÌõ¼şÌø×ª£¨jal/jalr£©
+//   aluop     : 00=ADD  01=ÓÉfunctÒëÂë  10=LUI
 //   immsrc    : 000 I  001 S  010 B  011 U  100 J
 // ============================================================================
 module control_unit (
@@ -28,29 +28,29 @@ module control_unit (
     output reg [2:0] immsrc,
     output reg [3:0] alucontrol
 );
-    // ---------------- ä¸»è¯‘ç å™¨ ----------------
+    // ---------------- Ö÷ÒëÂëÆ÷ ----------------
     always @(*) begin
         regwrite = 1'b0; alusrca = 1'b0; alusrcb = 1'b0; memwrite = 1'b0;
         resultsrc = 2'b00; branch = 1'b0; jump = 1'b0; aluop = 2'b00; immsrc = 3'b000;
         case (opcode)
-            7'b0110011: begin regwrite = 1'b1;                      aluop = 2'b01; end                 // R å‹
-            7'b0010011: begin regwrite = 1'b1; alusrcb = 1'b1;      aluop = 2'b01; end                 // I å‹ ALU
-            7'b0000011: begin regwrite = 1'b1; alusrcb = 1'b1; resultsrc = 2'b01; end                 // åŠ è½½
-            7'b0100011: begin            alusrcb = 1'b1; memwrite = 1'b1; immsrc = 3'b001; end        // å­˜å‚¨
-            7'b1100011: begin                   alusrca = 1'b1; alusrcb = 1'b1; branch = 1'b1; immsrc = 3'b010; end // åˆ†æ”¯
+            7'b0110011: begin regwrite = 1'b1;                      aluop = 2'b01; end                 // R ĞÍ
+            7'b0010011: begin regwrite = 1'b1; alusrcb = 1'b1;      aluop = 2'b01; end                 // I ĞÍ ALU
+            7'b0000011: begin regwrite = 1'b1; alusrcb = 1'b1; resultsrc = 2'b01; end                 // ¼ÓÔØ
+            7'b0100011: begin            alusrcb = 1'b1; memwrite = 1'b1; immsrc = 3'b001; end        // ´æ´¢
+            7'b1100011: begin                   alusrca = 1'b1; alusrcb = 1'b1; branch = 1'b1; immsrc = 3'b010; end // ·ÖÖ§
             7'b0110111: begin regwrite = 1'b1; alusrcb = 1'b1;      aluop = 2'b10; immsrc = 3'b011; end // lui
             7'b0010111: begin regwrite = 1'b1; alusrca = 1'b1; alusrcb = 1'b1; immsrc = 3'b011; end    // auipc
             7'b1101111: begin regwrite = 1'b1; alusrca = 1'b1; alusrcb = 1'b1; resultsrc = 2'b10; jump = 1'b1; immsrc = 3'b100; end // jal
             7'b1100111: begin regwrite = 1'b1; alusrcb = 1'b1; resultsrc = 2'b10; jump = 1'b1; end     // jalr
-            default: ;                                                                                  // fence/ecall/ebreak -> å…¨é›¶(NOP)
+            default: ;                                                                                  // fence/ecall/ebreak -> È«Áã(NOP)
         endcase
     end
 
-    // ---------------- ALU è¯‘ç å™¨ ----------------
+    // ---------------- ALU ÒëÂëÆ÷ ----------------
     always @(*) begin
         case (aluop)
             2'b00: alucontrol = 4'b0000;                        // ADD
-            2'b01: begin                                        // æŒ‰ funct3/funct7 è¯‘ç 
+            2'b01: begin                                        // °´ funct3/funct7 ÒëÂë
                 case (funct3)
                     3'b000: alucontrol = funct7[5] ? 4'b0001 : 4'b0000; // add/sub
                     3'b001: alucontrol = 4'b0101;               // sll

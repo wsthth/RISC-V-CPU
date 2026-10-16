@@ -1,11 +1,11 @@
 # ============================================================================
-# program.tcl â€”â€” è¿æ¥ Zynq æ¿å¡ï¼ˆJTAGï¼‰å¹¶çƒ§å½•æ¯”ç‰¹æµ
-# ç”¨æ³•ï¼š
-#   D:\Xilinx\Vivado\2019.1\bin\vivado.bat -mode batch -source program.tcl -tclargs <bitè·¯å¾„>
-# ç¤ºä¾‹ï¼š
+# program.tcl ¡ª¡ª Á¬½Ó Zynq °å¿¨£¨JTAG£©²¢ÉÕÂ¼±ÈÌØÁ÷
+# ÓÃ·¨£º
+#   D:\Xilinx\Vivado\2019.1\bin\vivado.bat -mode batch -source program.tcl -tclargs <bitÂ·¾¶>
+# Ê¾Àı£º
 #   ... -source program.tcl -tclargs D:/my_project/RISC-V/fpga/vivado_ac7021b/riscv_ac7021b.runs/impl_1/fpga_top_ac7021b.bit
-# ä¸å¸¦ -tclargs æ—¶é»˜è®¤çƒ§å½• AC7021B æ¯”ç‰¹æµã€‚
-# å‰ç½®ï¼šæ¿å­å·²ä¸Šç”µå¹¶è¿æ¥ JTAGï¼ˆAC7021B åº•æ¿ FT232HL USB-JTAG / ZedBoard æ¿è½½ USB-JTAGï¼‰
+# ²»´ø -tclargs Ê±Ä¬ÈÏÉÕÂ¼ AC7021B ±ÈÌØÁ÷¡£
+# Ç°ÖÃ£º°å×ÓÒÑÉÏµç²¢Á¬½Ó JTAG£¨AC7021B µ×°å FT232HL USB-JTAG / ZedBoard °åÔØ USB-JTAG£©
 # ============================================================================
 
 puts "ARGS: $argv"
@@ -20,7 +20,7 @@ if {![file exists $bit]} {
     error "BITSTREAM NOT FOUND: $bit"
 }
 
-# Vivado 2019.1 ç¡¬ä»¶ç®¡ç†å™¨å‘½ä»¤ä¸º open_hwï¼ˆ2020.x+ æ‰å« open_hw_managerï¼‰
+# Vivado 2019.1 Ó²¼ş¹ÜÀíÆ÷ÃüÁîÎª open_hw£¨2020.x+ ²Å½Ğ open_hw_manager£©
 open_hw
 connect_hw_server
 open_hw_target
@@ -28,9 +28,9 @@ refresh_hw_server
 set devs [get_hw_devices]
 puts "DEVICES=$devs"
 if {[llength $devs] == 0} {
-    error "NO HW DEVICE FOUND: è¯·æ£€æŸ¥ JTAG è¿æ¥/æ¿å¡ä¾›ç”µï¼ˆFT232HL / Digilent USB-JTAGï¼‰"
+    error "NO HW DEVICE FOUND: Çë¼ì²é JTAG Á¬½Ó/°å¿¨¹©µç£¨FT232HL / Digilent USB-JTAG£©"
 }
-# é€‰æ‹© Zynq FPGA å™¨ä»¶ï¼ˆxc7z020ï¼‰ï¼Œè·³è¿‡ ARM DAP
+# Ñ¡Ôñ Zynq FPGA Æ÷¼ş£¨xc7z020£©£¬Ìø¹ı ARM DAP
 set chosen ""
 foreach d $devs {
     set part [get_property PART $d]
