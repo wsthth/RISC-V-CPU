@@ -35,7 +35,12 @@ RISC-V/
 │   ├── single_cycle/     # 单周期 RV32I CPU（第 7 章教材结构）
 │   │   ├── control_unit.v
 │   │   └── riscv_single.v
-│   └── pipeline/         # 五级流水线 CPU（开发中）
+│   └── pipeline/         # 五级流水线 CPU（已仿真通过）
+│       ├── riscv_pipeline.v  # 顶层：IF/ID/EX/MEM/WB + 冒险/预测/MMIO
+│       ├── pipe_regs.v       # 4 组流水线寄存器（带 valid/flush）
+│       ├── hazard_unit.v     # Load-Use 检测（停顿/冒泡）
+│       ├── forward_unit.v    # 两级旁路转发
+│       └── branch_predictor.v# 2-bit 饱和计数器 + BTB
 ├── sim/
 │   ├── tb/               # 各级 Testbench
 │   ├── scripts/          # 仿真脚本 run_sim.ps1
@@ -45,6 +50,9 @@ RISC-V/
 │   └── asm_verify.py     # 汇编器编码自动校验（29 用例）
 ├── testprog/             # 测试汇编程序 + 生成的 hex/lst
 │   ├── basic.s           # 基础功能测试（单周期/流水线通用）
+│   ├── hazard.s          # 数据冒险测试（转发链 + Load-Use）
+│   ├── branch.s          # 分支/预测器测试（循环 + call/ret）
+│   ├── full.s            # RV32I 全指令集系统级测试
 │   └── hex/              # 汇编产物
 ├── fpga/                 # FPGA 工程脚本与约束（开发中）
 └── docs/                 # 设计文档
@@ -69,12 +77,18 @@ RISC-V/
    - 支持 RV32I 整数指令全集（含 jalr 目标对齐、字节/半字访存）
    - 整机测试 `tb_single` 运行 basic.s：**56 周期跑通，10 项检查全部通过**
 
+4. **五级流水线 CPU**（rtl/pipeline/）
+   - IF/ID/EX/MEM/WB + 4 组流水线寄存器（带 valid 位、flush 清控制）
+   - 数据冒险：EX/MEM 与 MEM/WB 两级旁路转发（load 转发内存读数据）+ Load-Use 停顿
+   - 控制冒险：2-bit 饱和计数器分支预测 + BTB；分支/跳转在 EX 解析，预测错误冲刷两级
+   - jal/jalr 在 EX 解析，jalr 目标低 1 位清零（RISC-V 规范）；MMIO 观察端口（0xFxxxxxxx 写输出）
+   - 整机测试全部通过：
+     - `tb_pipe_basic`（74 周期）/ `tb_pipe_hazard`（34 周期）/ `tb_pipe_branch`（352 周期）
+     - `tb_pipe_full`（全 RV32I 指令集 + 陷阱检查，156 周期）
+
 ### 🔨 开发中
-4. 五级流水线主体（IF/ID/EX/MEM/WB + 流水线寄存器）
-5. 冒险处理（转发 / 停顿 / 冲刷）
-6. 2-bit 分支预测器 + BTB
-7. 系统级全指令集验证
-8. FPGA 双板工程与上板
+5. 系统级更严格验证（访存未对齐、立即数边界等）
+6. FPGA 双板工程与上板（NetFPGA SUME + ZedBoard）
 
 ## 如何仿真（Vivado 2019.1）
 
@@ -89,7 +103,13 @@ powershell -File sim\scripts\run_sim.ps1 -TB tb_regfile
 # 3) 跑单周期整机（需加载 hex）
 powershell -File sim\scripts\run_sim.ps1 -TB tb_single -HEX testprog\hex\basic.hex
 
-# 4) 输出波形（生成 waves.vcd，可用 xsim/GTKWave 查看）
+# 4) 跑流水线整机（basic / hazard / branch / full 四套测试）
+powershell -File sim\scripts\run_sim.ps1 -TB tb_pipe_basic  -HEX testprog\hex\basic.hex
+powershell -File sim\scripts\run_sim.ps1 -TB tb_pipe_hazard -HEX testprog\hex\hazard.hex
+powershell -File sim\scripts\run_sim.ps1 -TB tb_pipe_branch -HEX testprog\hex\branch.hex
+powershell -File sim\scripts\run_sim.ps1 -TB tb_pipe_full   -HEX testprog\hex\full.hex
+
+# 5) 输出波形（生成 waves.vcd，可用 xsim/GTKWave 查看）
 powershell -File sim\scripts\run_sim.ps1 -TB tb_single -HEX testprog\hex\basic.hex -Wave
 ```
 
@@ -106,3 +126,4 @@ powershell -File sim\scripts\run_sim.ps1 -TB tb_single -HEX testprog\hex\basic.h
 ## 版本记录
 
 - **v0.1（2026-10-16）**：汇编器 + 底层模块 + 单周期 CPU，全部仿真通过
+- **v0.2（2026-10-16）**：五级流水线（转发/停顿/2-bit 分支预测 + BTB/jalr 对齐/MMIO）+ 冒险与全指令集测试，全部仿真通过；修复 7 个 bug（详见 risc-v.md）

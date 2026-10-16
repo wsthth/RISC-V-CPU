@@ -24,7 +24,7 @@ module alu #(parameter W = 32) (
             4'b0111: result = $signed(a) >>> b[4:0];
             4'b1000: result = ($signed(a) < $signed(b)) ? 32'b1 : 32'b0;
             4'b1001: result = (a < b) ? 32'b1 : 32'b0;
-            4'b1010: result = b << 12;              // lui：B 为符号扩展的 32 位 U 型立即数
+            4'b1010: result = b;                 // lui：B 已是 {imm[31:12],12'b0}，直接输出
             default: result = a + b;
         endcase
     end
