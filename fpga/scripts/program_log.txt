@@ -53,7 +53,7 @@ DEV xc7z020_1 PART=xc7z020
 # current_hw_device $chosen
 # set_property PROGRAM.FILE $bit [current_hw_device]
 # refresh_hw_device [current_hw_device]
-INFO: [Labtools 27-1435] Device xc7z020 (JTAG device index = 1) is not programmed (DONE status = 0).
+INFO: [Labtools 27-1434] Device xc7z020 (JTAG device index = 1) is programmed with a design that has no supported debug core(s) in it.
 # program_hw_devices [current_hw_device]
 INFO: [Labtools 27-3164] End of startup status: HIGH
 # puts "=== PROGRAMMING DONE ==="
@@ -62,4 +62,4 @@ INFO: [Labtools 27-3164] End of startup status: HIGH
 Device : xc7z020_1
 # puts "Bitstream: $bit"
 Bitstream: D:/my_project/RISC-V/fpga/vivado_ac7021b/riscv_ac7021b.runs/impl_1/fpga_top_ac7021b.bit
-INFO: [Common 17-206] Exiting Vivado at Fri Oct 16 16:54:30 2026...
+INFO: [Common 17-206] Exiting Vivado at Fri Oct 16 18:25:31 2026...
