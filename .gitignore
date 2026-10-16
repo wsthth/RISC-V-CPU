@@ -17,3 +17,13 @@ fpga/scripts/program.hex
 *.jou
 # riscv-tests generated outputs
 testprog/rvtest/
+# riscv-tests upstream root files (only isa/ + LICENSE tracked)
+riscv-tests-src/riscv-tests-master/.github/
+riscv-tests-src/riscv-tests-master/.gitignore
+riscv-tests-src/riscv-tests-master/.gitmodules
+riscv-tests-src/riscv-tests-master/Makefile.in
+riscv-tests-src/riscv-tests-master/README.md
+riscv-tests-src/riscv-tests-master/benchmarks/
+riscv-tests-src/riscv-tests-master/encoding/
+riscv-tests-src/riscv-tests-master/env/
+riscv-tests-src/riscv-tests-master/mt/
