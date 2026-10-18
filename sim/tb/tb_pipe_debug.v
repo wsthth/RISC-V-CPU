@@ -64,17 +64,25 @@ module tb_pipe_debug;
     wire [31:0] pred_target = dut.pred_target_f;
     wire [31:0] br_pc       = dut.pc_e;
     wire [31:0] br_target   = dut.branch_target_e;
+    // 调试补充：IF2/ID 指令与 rs2 字段
+    wire [31:0] f2_instr_v  = dut.instr_f2;
+    wire [31:0] id_instr_v  = dut.instr_id;
+    wire [4:0]  id_rs2f     = dut.rs2_d;
+    wire [31:0] id_rd2v     = dut.rd2_d;
 
     always @(posedge clk) begin
-        $display("%4d | IF: pcf=%06X pcfn=%06X mis=%0d a=%06X ar=%06X ptar=%06X vf2=%0d | %sEX pc=%06X brs1=%08X brs2=%08X mis=%0d brpc=%06X btar=%06X brres=%0d | F2: pc=%06X v%0d | ID: pc=%06X v%0d | WB: rd=%0d rw=%0d res=%08X",
+        $display("%4d | IF: pcf=%06X pcfn=%06X mis=%0d a=%06X ar=%06X ptar=%06X vf2=%0d | %sEX pc=%06X brs1=%08X brs2=%08X mis=%0d brpc=%06X btar=%06X brres=%0d | F2: pc=%06X v%0d | ID: pc=%06X v%0d | WB: rd=%0d rw=%0d res=%08X | IF2i=%08X IDi=%08X rs2f=%0d rd2=%08X",
                  cycles+1, dut.pcf, dut.pcf_next, dut.mispredict, dut.imem_i.a, dut.imem_addr, pred_target, dut.valid_f2,
                  (ex_valid ? "" : "(bub) "), ex_pc, br_rs1, br_rs2, ex_mis, br_pc, br_target, br_res,
                  f2_pc, f2_valid, id_pc, id_valid,
-                 wb_rd, wb_regwr, wb_res);
+                 wb_rd, wb_regwr, wb_res,
+                 f2_instr_v, id_instr_v, id_rs2f, id_rd2v);
     end
 
     initial begin
         $display("=== tb_pipe_debug start ===");
+        $dumpfile("debug.vcd");
+        $dumpvars(0, tb_pipe_debug);
         #10;
         repeat (4) @(posedge clk);
         reset = 0;

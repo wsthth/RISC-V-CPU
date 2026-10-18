@@ -1,7 +1,8 @@
 // ============================================================================
-// tb_dmem.v - 数据内存回归测试（同步读 SYNC_READ=1 + 同步写）
+// tb_dmem.v - 数据内存回归测试（组合读 SYNC_READ=0，完整非对齐功能）
 // 覆盖：word/半字/字节读写 + 符号/零扩展 + 非对齐跨字
-// 时序约定：写操作在边沿生效，读操作在边沿锁存（下一拍 rd 稳定）
+// 说明：BRAM 模式（SYNC_READ=1）为对齐访问优化（单地址读写可推断 Block RAM），
+//       非对齐跨字仅在组合读模式支持；本 TB 用 SYNC_READ=0 验证内存功能完整。
 // ============================================================================
 `timescale 1ns/1ps
 module tb_dmem;
@@ -12,7 +13,7 @@ module tb_dmem;
     wire [31:0] rd;
     integer errors = 0;
 
-    dmem uut (.clk(clk), .we(we), .funct3_r(funct3_r), .funct3_w(funct3_w),
+    dmem #(.SYNC_READ(0)) uut (.clk(clk), .we(we), .funct3_r(funct3_r), .funct3_w(funct3_w),
               .rd_addr(rd_addr), .wr_addr(wr_addr), .wd(wd), .rd(rd));
     always #5 clk = ~clk;
 

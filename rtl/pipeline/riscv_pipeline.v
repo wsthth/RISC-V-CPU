@@ -77,35 +77,72 @@ module riscv_pipeline (
 
     // ================= IF �� =================
     flopr #(.W(32)) pcreg (.clk(clk), .reset(reset), .d(pcf_next), .q(pcf));
-    // imem ͬ����ȡָ�-> IF2 ��ȡ��Ĵ�����pc_f2 + instr_f2 + pred_f2 + valid_f2��
-    // imem �ڲ���ַ�Ĵ��� addr_r <= a�������� addr_r �� rd ��Դ�̶�ƥ�䣻
-    // IF2 ���̴� pc_f2<=imem.rd_addr���� instr_f2<=imem.rd�����ߺ�ͬԴ����Զ��ԡ�
-    // a �� mispredict ʱ�� pcf_next��ͬ�� pcreg һ���л���Ŀ�꣨taken->branch_target_e，
-    // ��taken->pcplus4_e����ʹ addr_r �� pcreg �ڷ�֧������ͬ����λ��Ŀ�ꣻ
-    // stall ʱ pcreg ���֣�pcf ���䣬addr_r ���֣�IF2 ���֣�(pc_f2,instr_f2) ���֣�
+    // BRAM 同步读取指：imem 内部 rd_r<=mem[a]（dout 边沿锁存，可推断 Block RAM），
+    // imem_rd 拍 N = mem[a 拍 N-1]。riscv_pipeline 侧用 a_r（a 的延迟寄存器）
+    // 作为与 imem_rd 同源的取指地址：
+    //   * a_r 拍 N = a 拍 N-1；IF2 锁存 pc_f2<=a_r、instr_f2<=imem_rd
+    //     （imem_rd 拍 N = mem[a 拍 N-1]）→ (pc_f2,instr_f2) 恒配对同源
+    //   * stall 时 a=a_r（取指地址冻结），IF2 仍更新（锁存"已取未入 ID"的
+    //     指令），reg_ifid 保持（ID 指令不动）→ stall 恢复不丢指令
+    //   * pcf 在 stall 时回退到 a_r（pcf_next=stallf?a_r:...），恢复后从
+    //     "最后取指地址+4"继续，与 IF2 进度对齐
+    //   * stall 释放拍 a 直接用 pcf_next（跳过 pcf 的旧值），避免重复取指
     wire [31:0] imem_rd;
     wire [31:0] imem_addr;
-    imem imem_i (.clk(clk), .reset(reset), .a(stallf ? imem_addr : (mispredict ? pcf_next : (pred_taken_f ? pred_target_f : pcf))), .rd(imem_rd), .rd_addr(imem_addr));
+    // reset_d：reset 释放后再保持一拍复位语义。原因：BRAM 同步读 imem 的 rd_r
+    // 在 reset 期间被清 0，reset 释放后首拍 (a_r=0, rd_r=0) 是"伪取指"（IF2 应
+    // 以 v0 丢弃），下一拍 (0, mem[0]) 才是真指令。若 IF2 在释放首拍就正常
+    // 更新，伪指令 valid=1 抢占且污染 addr_prev，导致真指令被重复检测误抑制。
+    // reset_d 期间 IF2/a_r 走复位分支：释放首拍 v0，addr_prev 保持 FFFFFFFF，
+    // 释放次拍 (0, mem[0]) 配对且 valid=1 —— reset 后首条指令不丢。
+    reg         reset_d;
+    reg  [31:0] a_r;         // 取指地址延迟拍（与 imem_rd 同源）
+    reg         stallf_prev;
+    always @(posedge clk or posedge reset) begin
+        if (reset) reset_d <= 1'b1;
+        else       reset_d <= 1'b0;
+    end
+    wire        stall_release = stallf_prev && !stallf;
+    wire [31:0] a_comb = mispredict   ? pcf_next :
+                         stall_release ? pcf_next :
+                         (pred_taken_f ? pred_target_f : pcf);
+    wire [31:0] a = stallf ? a_r : a_comb;
+    imem imem_i (.clk(clk), .reset(reset), .a(a), .rd(imem_rd), .rd_addr(imem_addr));
+    always @(posedge clk or posedge reset) begin
+        if (reset || reset_d) begin
+            a_r         <= 32'b0;
+            stallf_prev <= 1'b0;
+        end
+        else begin
+            a_r         <= a;
+            stallf_prev <= stallf;
+        end
+    end
     reg [31:0] pc_f2;
     reg [31:0] instr_f2;
     reg        pred_f2;
     reg        valid_f2;   // IF2 ��Чλ��mispredict ʱ���壨��ֹ����·��ָ������ ID/EX��
-    // addr_prev/pcf_prev：��ַ�ƽ���⡣BRAM ͬ���� imem �� addr_r �� pcreg �� 1 �ģ�
-    // mispredict/����ʱ pcreg �������ȶ� pcf_next����� addr_r �� pcf ���ܳ���
-    // "ͬһ��ַ������ȡ"��重复取ָ�������� pcf ��δ�ƶ���addr_r δ��ʱ����Ч��
+    // addr_prev/pcf_prev：��ַ�ƽ���⡣BRAM ͬ���� imem ����� (a_r, instr)
+    // �� pcreg �� 1 �ģ�mispredict/����ʱ pcreg �����ȶ� pcf_next����� a_r
+    // �� pcf ���ܳ��� "ͬһ��ַ������ȡ"��重复取ָ�������� pcf ��δ�ƶ���
+    // a_r δ��ʱ����Ч��
     reg [31:0] addr_prev;
     reg [31:0] pcf_prev;
     always @(posedge clk or posedge reset) begin
-        if (reset) begin
+        if (reset || reset_d) begin
             pc_f2     <= 32'b0;
             instr_f2  <= 32'b0;
             pred_f2   <= 1'b0;
             valid_f2  <= 1'b0;
-            addr_prev <= 32'b0;
-            pcf_prev  <= 32'b0;
+            // reset 后 BRAM 同步读 rd_r 尚在复位态（=0），a_r 与 imem_rd 存在一拍错位：
+            // reset 释放首拍 (a_r=0, imem_rd=0) 伪指令以 v0 丢弃（reset_d 保持复位语义），
+            // 次拍 (0, mem[0]) 才是真取指。addr_prev/pcf_prev 置 FFFFFFFF
+            // （与 mispredict 分支一致），使该真指令不被重复检测误抑制。
+            addr_prev <= 32'hFFFFFFFF;
+            pcf_prev  <= 32'hFFFFFFFF;
         end
         else if (mispredict) begin
-            pc_f2     <= imem_addr;
+            pc_f2     <= a_r;
             instr_f2  <= imem_rd;
             pred_f2   <= pred_taken_f;
             valid_f2  <= 1'b0;     // ��ǰ IF2 Ϊ����·��ָ�
@@ -115,21 +152,24 @@ module riscv_pipeline (
             pcf_prev  <= 32'hFFFFFFFF;
         end
         else if (stallf) begin
-            // ���֣�IF2 ���֣���ȡ��ַ���䣬��ɿɿ��Ļ�ָ�
+            // stall 时 IF2 保持（不更新）：a=a_r 冻结取指，reg_ifid 保持（ID 不动），
+            // IF2 保持（"已取未入 ID"的指令不丢）——恢复后 reg_ifid 取 IF2 保持值，
+            // 且 a 直接走 stall_release->pcf_next 从"最后取指地址+4"继续。
+            // （若 stall 时 IF2 更新，会吸收 a_r 的重复指令并覆盖保持值，
+            //   恢复后 reg_ifid 取到新值，stall 前的指令被跳过——hazard 测试
+            //   0x28 sw x29 即因此丢失。）
             pc_f2     <= pc_f2;
             instr_f2  <= instr_f2;
             pred_f2   <= pred_f2;
             valid_f2  <= valid_f2;
         end
         else begin
-            pc_f2     <= imem_addr;
+            pc_f2     <= a_r;
             instr_f2  <= imem_rd;
             pred_f2   <= pred_taken_f;
-            // addr_r δ�ƶ��� pcf �Ѷ�����→ ���ظ�ȡ（mispredict ���ָ��ָ��ڶ��Σ�
-            // ��������ʼʱ��һ��）��Ϊ��Ч���ž���������；
-            // addr_r δ�ƶ��� pcf Ҳδ����→ stall �ָ���ͬһָ���������Ч��
-            valid_f2  <= ((imem_addr == addr_prev) && (pcf != pcf_prev)) ? 1'b0 : 1'b1;
-            addr_prev <= imem_addr;
+            // a_r δ�ƶ��� pcf �Ѷ�����→ ���ظ�ȡ��Ϊ��Ч���ž���������
+            valid_f2  <= ((a_r == addr_prev) && (pcf != pcf_prev)) ? 1'b0 : 1'b1;
+            addr_prev <= a_r;
             pcf_prev  <= pcf;
         end
     end
@@ -184,7 +224,7 @@ module riscv_pipeline (
     assign memread_e = resultsrc_e[0] & valid_e;   // EX ��Ϊ load
     hazard_unit hu (
         .memread_e(memread_e), .rde(rd_e),
-        .rs1_d(rs1_d), .rs2_d(rs2_d),
+        .rs1_d(rs1_d), .rs2_d(rs2_d), .opcode_d(opcode_d),
         .stallf(stallf), .stalld(stalld), .flushe(flushe)
     );
 
@@ -260,23 +300,34 @@ module riscv_pipeline (
     assign branch_taken_e = (branch_e & taken_e) | jump_e;
     assign branch_target_e = (jump_e & ~branch_e) ? {alu_result_e[31:1], 1'b0}
                                                    : alu_result_e;   // jalr Ŀ�����
-    assign mispredict = (branch_e | jump_e) & valid_e & (branch_taken_e != pred_e);
+    // ���⣨BTB 128 �� PC[8:2] ������长�����ڱ���������Ƿ�֧�֣�ȡ PC �ܵ� BTB
+    // ��Ŀ��（�� 0x0758 与 0x158 同 index）����ȡ��Ҫ����Ƿ�֧��ָ��被Ԥ�� taken��
+    // 此时必须冲刷：��ָ���� EX ��（该指����Ⲣ���������ˣ�����Ȼȡ��）
+    //   * 预测 taken 但指令非分支（B/jal/jalr 之外）→ BTB ��Ŀ��→ 纠正到 pc+4 ˳�����
+    //   * jalr ��Ԥ�� taken → jalr Ŀ�궯̬（rs1），BTB �浽�ľ�Ŀ�겻����→ ��按真实目标冲刷
+    //   * 条件分支/jal/jalr：预测与实际不符 → 冲刷（既有逻辑）
+    wire pred_taken_nonbranch = pred_e & valid_e & ~(branch_e | jump_e);
+    wire jalr_pred_taken      = pred_e & valid_e & jalr_e;
+    assign mispredict = ((branch_e | jump_e) & valid_e & (branch_taken_e != pred_e))
+                      | pred_taken_nonbranch
+                      | jalr_pred_taken;
     assign pcplus4_e = pc_e + 32'd4;
 
     // ---- ��֧Ԥ�������£��� B ���� jal д�� BTB��----
     assign branch_resolved_e = (branch_e | (jump_e & ~jalr_e)) & valid_e;
     branch_predictor bp (
         .clk(clk), .reset(reset),
-        .pcf(imem_addr), .pred_target(pred_target_f), .pred_taken(pred_taken_f),
+        .pcf(a_r), .pred_target(pred_target_f), .pred_taken(pred_taken_f),
         .branch_resolved(branch_resolved_e), .branch_taken(branch_taken_e),
         .branch_pc(pc_e), .branch_target(branch_target_e)
     );
 
     // ---- PC ���£����ȼ�����֧�ض��� > Ԥ��Ŀ�� > ͣ�� > PC+4��----
     // mispredict ʱ��"ʵ��ִ�з���"ȡĿ�꣺��֧ʵ������ȡ target��������ȡ PC+4
+    // stall ʱ pcf �ػ��� a_r��ʹ stall �ָ���ӡ���һ��ȡָ��ַ+4"������
     assign pcf_next = mispredict            ? (branch_taken_e ? branch_target_e : pcplus4_e) :
                       (pred_taken_f & ~stallf) ? pred_target_f :
-                      stallf                ? pcf :
+                      stallf                ? a_r :
                       pcplus4_f;
 
     // ================= EX/MEM �Ĵ��� =================
@@ -299,6 +350,10 @@ module riscv_pipeline (
     assign io_write_m = memwrite_m & valid_m & (alu_result_m[31:28] == 4'hF);
     // dmem ��ͬ������ַ�� EX �Σ�EX/MEM �߱���ֺ� MEM �����ݿ��ã�
     // memwb �ڼ� MEM/WB �߱���� readdata��load ��� 1 �� stall �ɶ���
+    // ע��：BRAM ͬ����д���˳�� sb/sh/sw ���ȣ��� MEM д（�� N ��），
+    //      ͬ址 load �� EX ���ѡ 1 ��（�� N+1 ��）�߱���ȡ——dmem �߱���
+    //      ���ȵ��Ǽ���д��ֵ���ټ��ⲿ readdata ��ת（�� wd_d1 ����ȫ�֣���
+    //      �ƻ� lb/lh ���Ŷ���չ）；д��ע���У��� sw ������ⲻ���ת��
     dmem dmem_i (
         .clk(clk),
         .we(memwrite_m & valid_m & ~io_write_m),

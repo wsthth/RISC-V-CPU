@@ -40,65 +40,13 @@ module dmem #(parameter DEPTH = 8192, parameter SYNC_READ = 1) (
         if (SYNC_READ) begin : sync_read
             reg [2:0]  rd_f3_r;
             reg [1:0]  rd_off_r;
-            // ---- 写后值组合计算（与同步写块镜像，供读旁路用）----
-            // sw/sh/sb 与随后的同址 lw/lh/lb 在同一拍（sw 在 MEM、lw 在 EX）时，
-            // 读 latch 与写 mem 并行且均为非阻塞，直接读 mem 会采到写前旧值
-            // （read-after-write）。此处提前算出"本次写入后的目标字"，写读同址时
-            // 读 latch 改采写后值，保证紧跟的 load 读到新数据。
-            reg [31:0] wpost0, wpost1;
-            wire       same_word = we && (wr_addr[31:2] == rd_addr[31:2]);
-            always @(*) begin
-                wpost0 = mem[wr_addr[31:2]];
-                wpost1 = mem[wr_addr[31:2] + 1];
-                case (funct3_w)
-                    3'b000: begin  // sb
-                        case (wr_addr[1:0])
-                            2'b00:   wpost0[7:0]   = wd[7:0];
-                            2'b01:   wpost0[15:8]  = wd[7:0];
-                            2'b10:   wpost0[23:16] = wd[7:0];
-                            default: wpost0[31:24] = wd[7:0];
-                        endcase
-                    end
-                    3'b001: begin  // sh（含非对齐）
-                        case (wr_addr[1:0])
-                            2'b00:   wpost0[15:0]  = wd[15:0];
-                            2'b01:   wpost0[23:8]  = wd[15:0];
-                            2'b10:   wpost0[31:16] = wd[15:0];
-                            default: begin
-                                wpost0[31:24] = wd[7:0];
-                                wpost1[7:0]   = wd[15:8];
-                            end
-                        endcase
-                    end
-                    3'b010: begin  // sw（支持非对齐）
-                        case (wr_addr[1:0])
-                            2'b00:   wpost0 = wd;
-                            2'b01: begin
-                                wpost0[31:8]    = wd[23:0];
-                                wpost1[7:0]     = wd[31:24];
-                            end
-                            2'b10: begin
-                                wpost0[31:16]   = wd[15:0];
-                                wpost1[15:0]    = wd[31:16];
-                            end
-                            default: begin
-                                wpost0[31:24]   = wd[7:0];
-                                wpost1[23:0]    = wd[31:8];
-                            end
-                        endcase
-                    end
-                    default: ;
-                endcase
-            end
+            // 纯同步读（标准 BRAM 读模式，可推断 Block RAM）：
+            // rd_word0<=mem[rd_addr] 边沿锁存。read-after-write
+            // （sw 在 MEM 写、同址 lw 在 EX 读同一拍边沿，读采旧值）由
+            // riscv_pipeline MEM 段转发修正（readdata_m_fwd 用 WB 段写数据）。
             always @(posedge clk) begin
-                if (same_word) begin
-                    rd_word0 <= wpost0;
-                    rd_word1 <= wpost1;
-                end
-                else begin
-                    rd_word0 <= mem[rd_addr[31:2]];
-                    rd_word1 <= mem[rd_addr[31:2] + 1];
-                end
+                rd_word0 <= mem[rd_addr[31:2]];
+                rd_word1 <= 32'b0;   // BRAM 模式单地址读，非对齐跨字仅组合读模式支持
                 rd_f3_r  <= funct3_r;
                 rd_off_r <= rd_addr[1:0];
             end
@@ -197,49 +145,86 @@ module dmem #(parameter DEPTH = 8192, parameter SYNC_READ = 1) (
         end
     endgenerate
 
-    // ---- 同步写（MEM 阶段，clk 边沿写入；支持非对齐 sh/sw 跨字）----
+    // ---- 同步写（MEM 阶段，clk 边沿写入）----
+    // 注意：BRAM 模式（SYNC_READ=1）只支持"单地址 + 字节使能"写模式
+    // （Vivado 才能推断 Block RAM）；非对齐跨字 sh/sw（同一拍写两个地址）
+    // 会破坏 BRAM 推断，仅组合读模式（SYNC_READ=0）保留完整非对齐写。
+    // 编译器/测试程序均为对齐访问，BRAM 模式语义不受影响。
     wire [1:0] woff = wr_addr[1:0];
-    always @(posedge clk) begin
-        if (we) begin
-            case (funct3_w)
-                3'b000: begin  // sb
-                    case (woff)
-                        2'b00:   mem[wr_addr[31:2]][7:0]   <= wd[7:0];
-                        2'b01:   mem[wr_addr[31:2]][15:8]  <= wd[7:0];
-                        2'b10:   mem[wr_addr[31:2]][23:16] <= wd[7:0];
-                        default: mem[wr_addr[31:2]][31:24] <= wd[7:0];
+    generate
+        if (SYNC_READ) begin : bram_write
+            always @(posedge clk) begin
+                if (we) begin
+                    case (funct3_w)
+                        3'b000: begin  // sb（单字内字节写，BRAM 字节使能）
+                            case (woff)
+                                2'b00:   mem[wr_addr[31:2]][7:0]   <= wd[7:0];
+                                2'b01:   mem[wr_addr[31:2]][15:8]  <= wd[7:0];
+                                2'b10:   mem[wr_addr[31:2]][23:16] <= wd[7:0];
+                                default: mem[wr_addr[31:2]][31:24] <= wd[7:0];
+                            endcase
+                        end
+                        3'b001: begin  // sh（仅单字内，off=3 跨字不支持）
+                            case (woff)
+                                2'b00:   mem[wr_addr[31:2]][15:0]  <= wd[15:0];
+                                2'b01:   mem[wr_addr[31:2]][23:8]  <= wd[15:0];
+                                2'b10:   mem[wr_addr[31:2]][31:16] <= wd[15:0];
+                                default: mem[wr_addr[31:2]] <= 32'b0;  // 跨字忽略
+                            endcase
+                        end
+                        3'b010: begin  // sw（仅对齐，off!=0 忽略）
+                            if (woff == 2'b00)
+                                mem[wr_addr[31:2]] <= wd;
+                        end
+                        default: ;
                     endcase
                 end
-                3'b001: begin  // sh（含非对齐）
-                    case (woff)
-                        2'b00:   mem[wr_addr[31:2]][15:0]  <= wd[15:0];
-                        2'b01:   mem[wr_addr[31:2]][23:8]  <= wd[15:0];
-                        2'b10:   mem[wr_addr[31:2]][31:16] <= wd[15:0];
-                        default: begin
-                            mem[wr_addr[31:2]][31:24] <= wd[7:0];
-                            mem[wr_addr[31:2] + 1][7:0] <= wd[15:8];
-                        end
-                    endcase
-                end
-                3'b010: begin  // sw（支持非对齐，跨字写入）
-                    case (woff)
-                        2'b00:   mem[wr_addr[31:2]] <= wd;
-                        2'b01: begin
-                            mem[wr_addr[31:2]][31:8]   <= wd[23:0];
-                            mem[wr_addr[31:2] + 1][7:0] <= wd[31:24];
-                        end
-                        2'b10: begin
-                            mem[wr_addr[31:2]][31:16]  <= wd[15:0];
-                            mem[wr_addr[31:2] + 1][15:0] <= wd[31:16];
-                        end
-                        default: begin
-                            mem[wr_addr[31:2]][31:24]  <= wd[7:0];
-                            mem[wr_addr[31:2] + 1][23:0] <= wd[31:8];
-                        end
-                    endcase
-                end
-                default: ;
-            endcase
+            end
         end
-    end
+        else begin : async_write
+            always @(posedge clk) begin
+                if (we) begin
+                    case (funct3_w)
+                        3'b000: begin  // sb
+                            case (woff)
+                                2'b00:   mem[wr_addr[31:2]][7:0]   <= wd[7:0];
+                                2'b01:   mem[wr_addr[31:2]][15:8]  <= wd[7:0];
+                                2'b10:   mem[wr_addr[31:2]][23:16] <= wd[7:0];
+                                default: mem[wr_addr[31:2]][31:24] <= wd[7:0];
+                            endcase
+                        end
+                        3'b001: begin  // sh（含非对齐）
+                            case (woff)
+                                2'b00:   mem[wr_addr[31:2]][15:0]  <= wd[15:0];
+                                2'b01:   mem[wr_addr[31:2]][23:8]  <= wd[15:0];
+                                2'b10:   mem[wr_addr[31:2]][31:16] <= wd[15:0];
+                                default: begin
+                                    mem[wr_addr[31:2]][31:24] <= wd[7:0];
+                                    mem[wr_addr[31:2] + 1][7:0] <= wd[15:8];
+                                end
+                            endcase
+                        end
+                        3'b010: begin  // sw（支持非对齐，跨字写入）
+                            case (woff)
+                                2'b00:   mem[wr_addr[31:2]] <= wd;
+                                2'b01: begin
+                                    mem[wr_addr[31:2]][31:8]   <= wd[23:0];
+                                    mem[wr_addr[31:2] + 1][7:0] <= wd[31:24];
+                                end
+                                2'b10: begin
+                                    mem[wr_addr[31:2]][31:16]  <= wd[15:0];
+                                    mem[wr_addr[31:2] + 1][15:0] <= wd[31:16];
+                                end
+                                default: begin
+                                    mem[wr_addr[31:2]][31:24]  <= wd[7:0];
+                                    mem[wr_addr[31:2] + 1][23:0] <= wd[31:8];
+                                end
+                            endcase
+                        end
+                        default: ;
+                    endcase
+                end
+            end
+        end
+    endgenerate
 endmodule

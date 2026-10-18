@@ -92,17 +92,18 @@ RISC-V/
 5. **riscv-tests 官方测试集系统验证**（tools/riscv_tests_conv.py + riscv_test_self.h + tb_rvtest.v）
    - 链路：官方 GAS 语法 `.S` → 翻译器（宏展开/RV64 指令过滤/数据段小端重构）→ 自研汇编器 → hex → xsim
    - **rv32ui 40/42 PASS**（全部可在 RV32 语义下满足的官方测试）
-   - SKIP（有明确理由，详见 risc-v.md 第 6 次记录）：
-     - `ma_data`：test_136 期望依赖官方自身 `#if __riscv_xlen==64` 排除的 RV64 sd 写入链（RV32 适配瑕疵，CPU 行为正确）
-     - `fence_i`：自修改代码测试，imem 为 ROM 无法支持（非冯·诺依曼边界）
-   - 批量运行：`powershell -File sim\scripts\run_rvtest.ps1`（单测可用 `-Only add,and,...`）
+   - 2 项边界说明（详见 risc-v.md 第 6/8 次记录）：
+     - `ma_data`：RV32 适配瑕疵（test_136 期望依赖官方 `#if __riscv_xlen==64` 排除的 RV64 sd 写入链）+ 同步读 BRAM 写语义差异（跨字忽略写），当前 FAIL 待收口
+     - `fence_i`：自修改代码测试（imem 为 ROM 无法支持）+ 自研汇编器不支持 GAS 三操作数访存语法（ASM_FAIL），属工具链/架构边界
+   - 批量运行：`powershell -File sim\scripts\run_rvtest.ps1`（单测可用 `-Only add,and,...`；个别测试偶发 UNKNOWN 属输出捕获问题，单跑稳定）
 
-6. **内存 BRAM 化 + 同步读改造**（v0.4）
-   - `imem.v` / `dmem.v` 参数化：`DEPTH=8192`（32KB，默认），`SYNC_READ=1`（同步读，可推断 Block RAM）；单周期用 `SYNC_READ=0`（组合读）不受影响
-   - dmem 读写地址分离（读提前到 EX 阶段）、写后值旁路（read-after-write：sw 后同拍同址 lw 读到新值）
-   - 取指链路重构：新增 IF2 取指级（pc_f2/instr_f2/valid_f2），reg_ifid 增加 valid_in；imem 新增 reset 端口（防仿真 X 死锁）
-   - **同步读模式下 4 个流水线 TB 全 PASS**（basic 74 / hazard 34 / branch 352 / full 156 周期）+ tb_single/tb_imem/tb_dmem PASS + riscv-tests 40/42 无回归
-   - 修复 5 个根因：预测目标取指、bp 查询错拍、addr_r X 死锁、mispredict 基准污染、stall 取指不冻结 + dmem read-after-write 旁路（详见 risc-v.md 第 7 次记录）
+6. **内存 BRAM 化 + 同步读改造 + ld_st 修复**（v0.4→v0.5）
+   - `imem.v` / `dmem.v` 参数化：`DEPTH=8192`（32KB，默认），`SYNC_READ=1`（**真同步读**，可综合推断 Block RAM，解决组合读映射 LUTRAM 导致 Slice LUT 12059/BRAM 0 与 Route OOM）；单周期用 `SYNC_READ=0`（组合读）不受影响
+   - dmem 同步写采用 `bram_write`（单地址 + 字节使能：sb 单字内字节写、sh 仅 off 00/01/10、sw 仅 off==00，跨字访问忽略写）；读口纯同步
+   - 取指链路：新增 IF2 取指级（pc_f2/instr_f2/valid_f2）、`a_r` 取指地址寄存器、`reset_d`（复位释放后保持一拍复位语义）、stall 期间 IF2 完全保持、mispredict 基准重置
+   - **hazard_unit 修复（ld_st 根因）**：LUI/AUIPC/JAL 的 rs1/rs2 字段是立即数位，不再参与 load-use 检测（此前 `lui x7` 的 imm 恰为 2，撞上 `lw x2` 的 rd=2 误停，触发 stall_release 跳取指导致 lui/addi 重复执行）
+   - **同步读模式下 7 个回归 TB 全 PASS**（basic 74 / hazard 34 / branch 352 / full 156 + tb_single/tb_imem/tb_dmem）；riscv-tests 40/42 PASS（ld_st 修复后）
+   - 修复根因汇总：预测目标取指、bp 查询错拍、addr_r X 死锁、mispredict 基准污染、stall 取指不冻结、dmem read-after-write 旁路、hazard LUI 误判（详见 risc-v.md 第 7/8 次记录）
 
 ### 🔨 开发中
 5. CoreMark 仿真跑分（RV32I 裸机移植 + iterations/s 换算）
@@ -156,3 +157,4 @@ powershell -File sim\scripts\run_sim.ps1 -TB tb_single -HEX testprog\hex\basic.h
 - **v0.2（2026-10-16）**：五级流水线（转发/停顿/2-bit 分支预测 + BTB/jalr 对齐/MMIO）+ 冒险与全指令集测试，全部仿真通过；修复 7 个 bug（详见 risc-v.md）
 - **v0.3（2026-10-16）**：riscv-tests 官方测试集工具链（翻译器/汇编器扩展/通用 TB）——rv32ui **40/42 PASS**，dmem 非对齐读写重构（lh/lhu/lw/sh/sw 跨字）；2 项 SKIP 有明确理由（详见 risc-v.md 第 6 次记录）
 - **v0.4（2026-10-16）**：内存 BRAM 化 + 同步读改造——imem/dmem 参数化 32KB + SYNC_READ，取指链路 IF2 重构，dmem 写后值旁路；同步读模式下流水线 4 TB + 单周期/内存 TB + riscv-tests 全回归通过（详见 risc-v.md 第 7 次记录）
+- **v0.5（2026-10-16）**：BRAM 可综合化收口 + ld_st 修复——真同步读（bram_write 字节使能写）、reset_d、stall IF2 完全保持、hazard_unit 排除 LUI/AUIPC/JAL 无源指令（ld_st 由 FAIL 转 PASS）；7 个回归 TB 全 PASS，riscv-tests 40/42（详见 risc-v.md 第 8 次记录）
