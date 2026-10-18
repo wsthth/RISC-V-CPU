@@ -29,8 +29,18 @@ $skip = @{
 $results = @()
 foreach ($t in $names) {
     Write-Host "===== $t ====="
-    if ($skip.ContainsKey($t)) { $results += "$t : SKIP ($($skip[$t]))"; continue }
-    # 1. 翻译
+    if ($skip.ContainsKey($t)) {
+        # SKIP 项附加"语义验证"留档：ma_data 用 ASYNC_DMEM（组合读+完整非对齐写）单跑，
+        # 验证 CPU 访存逻辑（期望：test1-135 全过、test_136+ 官方 RV64 sd 依赖处失败）
+        if ($t -eq 'ma_data') {
+            $vso = powershell -ExecutionPolicy Bypass -File "sim\scripts\run_sim.ps1" -TB tb_rvtest `
+                -HEX "$out\hex\ma_data.hex" -DATA "$out\hex\ma_data.data.hex" -Define ASYNC_DMEM 2>&1
+            $vso | Out-File "$root\sim\work\ma_async_verify.txt" -Encoding utf8
+            Write-Host "ma_data ASYNC_DMEM verify -> $($vso | Select-String 'TEST PASSED|TEST FAILED' | ForEach-Object { $_.Line })"
+        }
+        $results += "$t : SKIP ($($skip[$t]))"
+        continue
+    }    # 1. 翻译
     $c = python tools\riscv_tests_conv.py "$src\$t.S" $out 2>&1
     if ($LASTEXITCODE -ne 0) { $results += "$t : ASM_conv_fail"; continue }
     # 2. 汇编

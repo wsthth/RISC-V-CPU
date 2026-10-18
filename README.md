@@ -92,22 +92,30 @@ RISC-V/
 5. **riscv-tests 官方测试集系统验证**（tools/riscv_tests_conv.py + riscv_test_self.h + tb_rvtest.v）
    - 链路：官方 GAS 语法 `.S` → 翻译器（宏展开/RV64 指令过滤/数据段小端重构）→ 自研汇编器 → hex → xsim
    - **rv32ui 40/42 PASS**（全部可在 RV32 语义下满足的官方测试）
-   - 2 项边界 SKIP（有明确技术理由，详见 risc-v.md 第 6/9 次记录）：
-     - `ma_data`：非对齐读写已完整修复（test 1-135 全过），test_136+ 期望依赖官方 `#if __riscv_xlen==64` 排除的 RV64 sd 写入链（官方 RV32 适配瑕疵）
+   - 2 项边界 SKIP（有明确技术理由，详见 risc-v.md 第 6/9/10 次记录）：
+     - `ma_data`：非对齐**读**完整支持（mem1 镜像高字口，BRAM 可综合，test 1-47 全过）；跨字**写**为 BRAM 单写口架构边界（上板程序全对齐不受影响，RISC-V 规范不要求硬件支持非对齐）；test_136+ 期望依赖官方 `#if __riscv_xlen==64` 排除的 RV64 sd 写入链（官方 RV32 适配瑕疵）
      - `fence_i`：自修改代码测试（imem 为 ROM 无法支持）+ 自研汇编器不支持 GAS 三操作数访存语法（ASM_FAIL），属工具链/架构边界
    - 批量运行：`powershell -File sim\scripts\run_rvtest.ps1`（单测可用 `-Only add,and,...`；个别测试偶发 UNKNOWN 属输出捕获问题，单跑稳定）
 
 6. **内存 BRAM 化 + 同步读改造 + ld_st 修复**（v0.4→v0.5）
    - `imem.v` / `dmem.v` 参数化：`DEPTH=8192`（32KB，默认），`SYNC_READ=1`（**真同步读**，可综合推断 Block RAM，解决组合读映射 LUTRAM 导致 Slice LUT 12059/BRAM 0 与 Route OOM）；单周期用 `SYNC_READ=0`（组合读）不受影响
-   - dmem 同步写采用 `bram_write`（单地址 + 字节使能：sb 单字内字节写、sh 支持 off 00/01/10/跨字、sw 支持全部 off 未对齐跨字写）+ **镜像存储 mem1 双 RAM**（非对齐跨字读的高字口）+ write-through 写后值旁路（防御性冗余）；`run_rvtest.ps1` 新增 SKIP 机制（ma_data/fence_i 边界项带理由直接判 SKIP）
+   - dmem 同步写采用 `bram_write`（单地址 + 字节使能：sb 全 off、sh off 00/01/10、sw 仅对齐；**跨字 sh/sw 为 BRAM 单写口边界忽略**）+ **镜像存储 mem1 双 RAM**（非对齐跨字读的高字口，simple dual port 可综合）+ riscv_pipeline 的 `ASYNC_DMEM` 宏切换（完整非对齐写语义仿真验证）；`run_rvtest.ps1` 新增 SKIP 机制（ma_data/fence_i 边界项带理由直接判 SKIP）
    - 取指链路：新增 IF2 取指级（pc_f2/instr_f2/valid_f2）、`a_r` 取指地址寄存器、`reset_d`（复位释放后保持一拍复位语义）、stall 期间 IF2 完全保持、mispredict 基准重置
    - **hazard_unit 修复（ld_st 根因）**：LUI/AUIPC/JAL 的 rs1/rs2 字段是立即数位，不再参与 load-use 检测（此前 `lui x7` 的 imm 恰为 2，撞上 `lw x2` 的 rd=2 误停，触发 stall_release 跳取指导致 lui/addi 重复执行）
-   - **同步读模式下 7 个回归 TB 全 PASS**（basic 74 / hazard 34 / branch 352 / full 156 + tb_single/tb_imem/tb_dmem）；riscv-tests **40/42 PASS + 2 SKIP 收口**（ma_data 非对齐读写完整修复：test 1-135 全过，test_136+ 为官方 RV64 sd 依赖；fence_i 为自修改代码边界）
+   - **同步读模式下 7 个回归 TB 全 PASS**（basic 74 / hazard 34 / branch 352 / full 156 + tb_single/tb_imem/tb_dmem）；riscv-tests **40/42 PASS + 2 SKIP 收口**（ma_data 非对齐读全过 + 跨字写为 BRAM 单写口架构边界；fence_i 为自修改代码边界）
    - 修复根因汇总：预测目标取指、bp 查询错拍、addr_r X 死锁、mispredict 基准污染、stall 取指不冻结、dmem read-after-write 旁路、hazard LUI 误判（详见 risc-v.md 第 7/8 次记录）
 
+7. **内存 BRAM 化完成 + LUT<5K 达标**（v0.6，2026-10-18）
+   - dmem 重构为**纯同步读 + 组合层写通旁路**：rd_word0/rd_word1 无条件同步读（标准 1W2R BRAM 模式），写后读同址旁路移到 rd_int 组合层（一拍延迟写信息 wpost_*_r 重构写后字，未写字节取 rd_word0 本拍真值）；字节使能独立 if 写（sb/sh/sw 对齐，BRAM 单写口边界跨字写忽略）
+   - 双读口 rd_addr2（=rd_addr+4）替代 mem1 镜像存储（高字跨字读），单数组 1W2R
+   - **综合结果（AC7021B xc7z020clg484-1，DEPTH=2048，led.hex）**：Slice LUTs **3154**（5.93%，基线 12059，累计 -74%）/ LUT as Memory 48 / Block RAM Tile 4（RAMB18×4）—— **imem+dmem 全部推断为 Block RAM，LUT<5K 演示项达标**
+   - 全量 riscv-tests **40/42 PASS + 2 SKIP**（组合旁路版无回归）；ld_st PASS 1242 cycles
+
 ### 🔨 开发中
-5. CoreMark 仿真跑分（RV32I 裸机移植 + iterations/s 换算）
-6. FPGA 上板收尾：SUME 约束引脚核对（ZedBoard 已完成综合实现出比特流）；AC7021B 实机 LED 闪烁验证通过
+5. 应用演示：矩阵乘法 + 快速排序（仿真 + 上板 + 演示视频）
+6. CoreMark 仿真跑分（RV32I 裸机移植 + iterations/s 换算）
+7. 正式设计文档（Word/PDF）
+8. FPGA 上板收尾：AC7021B 已实机 LED 闪烁验证通过；SUME 板约束引脚核对；BRAM 化后比特流重出 + 上板验证
 
 ## FPGA 上板（已完成 ZedBoard 全流程）
 
@@ -157,5 +165,7 @@ powershell -File sim\scripts\run_sim.ps1 -TB tb_single -HEX testprog\hex\basic.h
 - **v0.2（2026-10-16）**：五级流水线（转发/停顿/2-bit 分支预测 + BTB/jalr 对齐/MMIO）+ 冒险与全指令集测试，全部仿真通过；修复 7 个 bug（详见 risc-v.md）
 - **v0.3（2026-10-16）**：riscv-tests 官方测试集工具链（翻译器/汇编器扩展/通用 TB）——rv32ui **40/42 PASS**，dmem 非对齐读写重构（lh/lhu/lw/sh/sw 跨字）；2 项 SKIP 有明确理由（详见 risc-v.md 第 6 次记录）
 - **v0.4（2026-10-16）**：内存 BRAM 化 + 同步读改造——imem/dmem 参数化 32KB + SYNC_READ，取指链路 IF2 重构，dmem 写后值旁路；同步读模式下流水线 4 TB + 单周期/内存 TB + riscv-tests 全回归通过（详见 risc-v.md 第 7 次记录）
-- **v0.5.1（2026-10-18）**：ma_data 非对齐读写完整修复收口——dmem 新增 mem1 镜像存储（跨字读高字口）+ bram_write 跨字 sh/sw 双存储写（低字 mem + 高字 mem/mem1 对称写）+ write-through 旁路；ma_data 由 FAIL 转 SKIP（test 1-135 全过，test_136+ 为官方 RV64 sd 依赖）；run_rvtest.ps1 新增 SKIP 机制；riscv-tests 最终口径 40/42 PASS + 2 SKIP（详见 risc-v.md 第 9 次记录）
+- **v0.5.1（2026-10-18）**：riscv-tests 收口——dmem 新增 mem1 镜像存储（非对齐跨字读高字口，双 BRAM 可综合）+ run_rvtest.ps1 新增 SKIP 机制（ma_data/fence_i 带理由）；riscv-tests 最终口径 40/42 PASS + 2 SKIP（详见 risc-v.md 第 9 次记录）
+- **v0.5.2（2026-10-18）**：BRAM 单写口边界收口——跨字写（sh off=3/sw off!=0 双地址写）综合无法推断 BRAM，回退单地址字节使能写（mem/mem1 同地址镜像）；riscv_pipeline 新增 ASYNC_DMEM 宏分离仿真语义；修复综合失败，7 TB 回归全 PASS（详见 risc-v.md 第 10 次记录）
+- **v0.6（2026-10-18）**：BRAM 化收官——dmem 纯同步读 + rd_addr2 双读口 + 组合层写通旁路，imem/dmem 全推断 Block RAM，Slice LUTs 12059→**3154（<5K 达标）**、LUTRAM 3632→48、BRAM×4；riscv-tests 40/42 无回归（详见 risc-v.md 第 11/12 次记录）
 - **v0.5（2026-10-16）**：BRAM 可综合化收口 + ld_st 修复——真同步读（bram_write 字节使能写）、reset_d、stall IF2 完全保持、hazard_unit 排除 LUI/AUIPC/JAL 无源指令（ld_st 由 FAIL 转 PASS）；7 个回归 TB 全 PASS，riscv-tests 40/42（详见 risc-v.md 第 8 次记录）

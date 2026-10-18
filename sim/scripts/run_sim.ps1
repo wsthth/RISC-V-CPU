@@ -1,20 +1,21 @@
 # =============================================================================
-# run_sim.ps1 - Vivado 2019.1 xsim ä»¿çœŸè„šæœ¬
-# ç”¨æ³•ï¼š
+# run_sim.ps1 - Vivado 2019.1 xsim ·ÂÕæ½Å±¾
+# ÓÃ·¨£º
 #   powershell -File run_sim.ps1 -TB tb_alu
 #   powershell -File run_sim.ps1 -TB tb_single -HEX ..\..\testprog\hex\basic.hex
 #   powershell -File run_sim.ps1 -TB tb_dmem -Wave
-# è¯´æ˜ï¼š
-#   - è‡ªåŠ¨ç¼–è¯‘ rtl/ ä¸‹å…¨éƒ¨ Verilog + sim/tb/<TB>.v
-#   - åœ¨ sim/work/<TB>/ ä¸‹è¿è¡Œï¼Œprogram.hex / data.hex ç”±è„šæœ¬å¤åˆ¶åˆ°è¯¥ç›®å½•
-#   - -Wave æ—¶è¾“å‡º waves.vcdï¼ˆå¯ç”¨ xsim æˆ– GTKWave æ‰“å¼€ï¼‰
-#   - ç»“æŸæ—¶æ‰“å° TEST PASSED / TEST FAILED / è¶…æ—¶ä¿¡æ¯
+# ËµÃ÷£º
+#   - ×Ô¶¯±àÒë rtl/ ÏÂÈ«²¿ Verilog + sim/tb/<TB>.v
+#   - ÔÚ sim/work/<TB>/ ÏÂÔËĞĞ£¬program.hex / data.hex ÓÉ½Å±¾¸´ÖÆµ½¸ÃÄ¿Â¼
+#   - -Wave Ê±Êä³ö waves.vcd£¨¿ÉÓÃ xsim »ò GTKWave ´ò¿ª£©
+#   - ½áÊøÊ±´òÓ¡ TEST PASSED / TEST FAILED / ³¬Ê±ĞÅÏ¢
 # =============================================================================
 param(
     [Parameter(Mandatory=$true)][string]$TB,
     [string]$HEX = "",
     [string]$DATA = "",
-    [switch]$Wave
+    [switch]$Wave,
+    [string]$Define = ""   # ¶îÍâºê£¬Èç -Define ASYNC_DMEM£¨¶ººÅ·Ö¸ô¶à¸ö£©
 )
 
 $vivado = "D:\Xilinx\Vivado\2019.1\bin"
@@ -27,7 +28,7 @@ if ($DATA -and (Test-Path $DATA)) { Copy-Item $DATA (Join-Path $work "data.hex")
 
 Set-Location $work
 
-# ---- 1. ç¼–è¯‘ RTL + TB ----
+# ---- 1. ±àÒë RTL + TB ----
 $rtlFiles = @()
 Get-ChildItem (Join-Path $root "rtl") -Filter *.v -Recurse | Sort-Object FullName |
     ForEach-Object { $rtlFiles += $_.FullName }
@@ -37,15 +38,16 @@ if (-not (Test-Path $tbFile)) { Write-Host "ERROR: TB not found: $tbFile"; exit 
 Write-Host "== xvlog =="
 $defineArgs = @()
 if ($DATA) { $defineArgs += "-d"; $defineArgs += "DMEM_INIT" }
+if ($Define) { foreach ($m in ($Define -split ',')) { if ($m) { $defineArgs += "-d"; $defineArgs += $m } } }
 & "$vivado\xvlog.bat" -work work $defineArgs $rtlFiles $tbFile 2>&1 | Out-Host
 if ($LASTEXITCODE -ne 0) { Write-Host "COMPILE FAILED"; exit 1 }
 
-# ---- 2. ä¾‹åŒ– ----
+# ---- 2. Àı»¯ ----
 Write-Host "== xelab =="
 & "$vivado\xelab.bat" -L work -debug typical $TB -s sim_snapshot 2>&1 | Out-Host
 if ($LASTEXITCODE -ne 0) { Write-Host "ELAB FAILED"; exit 1 }
 
-# ---- 3. è¿è¡Œ ----
+# ---- 3. ÔËĞĞ ----
 Write-Host "== xsim =="
 if ($Wave) {
     $tcl = "open_vcd `"waves.vcd`"`nlog_vcd [get_objects -r /$TB/*]`nrun all`nclose_vcd`nquit`n"
@@ -56,7 +58,7 @@ $tcl | Out-File -FilePath (Join-Path $work "run.tcl") -Encoding ascii
 $simout = & "$vivado\xsim.bat" sim_snapshot -t run.tcl 2>&1
 $simout | Out-Host
 
-# ---- 4. ç»“æœ ----
+# ---- 4. ½á¹û ----
 if ($simout -match "TEST PASSED") {
     Write-Host ">>> RESULT: PASS"
     exit 0

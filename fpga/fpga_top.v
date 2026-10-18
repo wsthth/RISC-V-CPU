@@ -17,7 +17,8 @@
 // ============================================================================
 module fpga_top #(
     parameter LED_W          = 8,   // ZedBoard：8 个 LED
-    parameter LED_ACTIVE_LOW = 0    // 0=高电平点亮（ZedBoard）；1=低电平点亮（AC7021B）
+    parameter LED_ACTIVE_LOW = 0,   // 0=高电平点亮（ZedBoard）；1=低电平点亮（AC7021B）
+    parameter DEPTH          = 2048 // imem/dmem 深度（2048 字=8KB，综合控内存）
 ) (
     input  wire           clk,      // 板载时钟
     input  wire           btn_rst,  // 复位按钮（高有效）；无外部复位时接 1'b0
@@ -36,7 +37,7 @@ module fpga_top #(
     wire        io_write;
     wire [31:0] io_wdata;
 
-    riscv_pipeline cpu (
+    riscv_pipeline #(.DEPTH(DEPTH)) cpu (
         .clk      (clk),
         .reset    (reset),
         .pc       (pc),
