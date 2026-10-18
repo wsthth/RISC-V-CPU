@@ -565,3 +565,45 @@ ERROR: [Synth 8-3391] ... 'bram_write.mem1_reg' ...
 4. CoreMark：riscv-gcc 工具链（gcc.zip 重新下载）→ 裸机移植 → 跑分（250 次/s@100MHz）。
 5. 正式设计文档（Word/PDF）：逻辑框图 + 子模块信号列表 + RTL 说明 + 仿真报告/波形。
 6. SUME 板约束核对与上板。
+
+
+---
+
+## 2026-10-18（第 13 次工作：应用演示程序 matmul/qsort + AC7021B 全流程构建尝试）
+
+### 工作目标
+- 编写并仿真验证赛题「应用演示」程序：矩阵乘法 + 快速排序（RV32I 汇编，自校验，tb_rvtest 判定 PASS）。
+- BRAM 化（v0.6）后重跑 AC7021B 全流程（综合+实现+比特流），为实机上板验证做准备。
+
+### 遇到的问题与 debug 过程
+**1) matmul.s 首次仿真 FAIL（gp=2 校验失败）**
+- 现象：TEST FAILED，gp=2，8273 cycles。
+- 根因（代码审查定位）：三处地址公式写错——`i*8+k*2` 不等于 `i*12+k*4`（i*12 需要 i*8+i*4 两次移位，k*4 是 k<<2；我误写成 i<<3 + k<<1）。
+- 解决：A[i][k]/B[k][j]/C[i][j] 三处偏移统一改为 `(n<<3)+(n<<2)+(m<<2)` 形式（n*12+m*4），重汇编重仿真 PASS。
+- 方法：地址计算先手写推导（偏移 = 行×12 + 列×4），再对照移位组合验证，避免拍脑袋写移位。
+
+**2) qsort.s 首次仿真 xsim 报 out of memory**
+- 现象：xsim "The application has run out of memory"，RESULT UNKNOWN。
+- 排查：检查 lst 确认 call/jalr 目标地址全部正确（主调 0x68、递归左 0x68、递归右 0x68），程序逻辑无死循环；怀疑 xsim 偶发问题。
+- 解决：清缓存重跑一次 → PASS（gp=1，871 cycles）。结论：xsim 偶发 OOM（与程序无关），重跑即恢复。
+
+**3) build_ac7021b.tcl（GBK 注释版）综合阶段 SYNTHESIS FAILED**
+- 现象：runme.log 只有启动行，综合子进程无输出即退（error.rst 空）——Vivado 2019.1 批处理子进程崩溃（历史 TclStackFree 类环境问题再现）。
+- 排查：synth_only.tcl（纯 ASCII）同一步骤成功 → 怀疑 GBK 中文注释字节触发 Vivado 解析问题。
+- 解决：新建 build_v06.tcl（纯 ASCII 注释 + -jobs 4）重跑全流程（进行中）。
+
+### 实验结果
+- **matmul.s（3x3 整数矩阵乘法，软件乘法）**：PASS gp=1，8503 cycles。A=[1..9]×B=[9..1] → C=[30 24 18; 84 69 54; 138 114 90] 全部 9 元素校验通过。
+- **qsort.s（快速排序 Lomuto 划分 + 递归 + 栈）**：PASS gp=1，871 cycles。arr[8]={5,2,9,1,7,6,3,8} → {1,2,3,5,6,7,8,9} 校验通过。验证了：栈操作（sp=0x7F00 向下生长、递归帧 7 字）、递归调用（call/ra 保存恢复）、跨函数数据访问。
+- AC7021B build_v06 全流程：进行中。
+
+### 结论
+- 两个应用演示程序仿真全部通过，可直接用于上板演示（程序自校验，硬件跑通即 LED/串口可见结果）。
+- 应用演示用到的 CPU 能力已全部验证：软件乘法（循环/移位/条件分支）、内存访存（数组/栈）、递归调用（call/jalr + 栈帧）、比较分支。
+
+### 下一步
+1. build_v06 结果：成功则出比特流 → AC7021B 实机上板（led.hex 已上过，换 matmul/qsort 程序验证计算正确性）。
+2. git 提交 matmul/qsort + risc-v.md（README 补充应用演示说明）。
+3. CoreMark：riscv-gcc 工具链下载重试 → 裸机移植 → 跑分。
+4. 正式设计文档（Word/PDF）。
+5. 演示视频录制。
