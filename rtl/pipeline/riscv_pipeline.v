@@ -10,7 +10,7 @@
 //   * jal/jalr 锟斤拷 EX 锟轿斤拷锟斤拷锟斤拷jalr 目锟斤拷锟?1 位锟斤拷锟姐（RISC-V 锟芥范锟斤拷
 //   * 锟斤拷选 MMIO锟斤拷锟斤拷 0xFxxxxxxx 锟斤拷址写锟斤拷锟斤拷时锟斤拷锟?io_write/io_wdata锟斤拷FPGA 锟斤拷示锟矫ｏ拷
 // ============================================================================
-module riscv_pipeline #(parameter DEPTH = 8192) (
+module riscv_pipeline #(parameter DEPTH = 8192, parameter PREDICT = 1) (
     input        clk,
     input        reset,
     // ---- 锟桔诧拷丝冢锟絋B/锟斤拷锟皆ｏ拷----
@@ -24,6 +24,9 @@ module riscv_pipeline #(parameter DEPTH = 8192) (
     wire [31:0] pcf, pcf_next, pcplus4_f, instr_f;
     wire        pred_taken_f;
     wire [31:0] pred_target_f;
+    // PREDICT 参数开关（v0.8 重建）：=0 时强制关预测，供 CoreMark 仿真调试
+    wire        pred_taken_eff  = PREDICT ? pred_taken_f  : 1'b0;
+    wire [31:0] pred_target_eff = PREDICT ? pred_target_f : 32'b0;
     // ---- 冒锟秸匡拷锟斤拷 ----
     wire        stallf, stalld, flushe;
     wire        mispredict;
@@ -65,6 +68,7 @@ module riscv_pipeline #(parameter DEPTH = 8192) (
     wire        valid_m;
     // ---- MEM ----
     wire [31:0] readdata_m;
+    wire [31:0] readdata_dmem;
     wire        io_write_m;
     // ---- MEM/WB 锟斤拷锟?----
     wire        regwrite_w;
@@ -105,7 +109,7 @@ module riscv_pipeline #(parameter DEPTH = 8192) (
     wire        stall_release = stallf_prev && !stallf;
     wire [31:0] a_comb = mispredict   ? pcf_next :
                          stall_release ? pcf_next :
-                         (pred_taken_f ? pred_target_f : pcf);
+                         (pred_taken_eff ? pred_target_eff : pcf);
     wire [31:0] a = stallf ? a_r : a_comb;
     imem #(.DEPTH(DEPTH)) imem_i (.clk(clk), .reset(reset), .a(a), .rd(imem_rd), .rd_addr(imem_addr));
     always @(posedge clk or posedge reset) begin
@@ -144,7 +148,7 @@ module riscv_pipeline #(parameter DEPTH = 8192) (
         else if (mispredict) begin
             pc_f2     <= a_r;
             instr_f2  <= imem_rd;
-            pred_f2   <= pred_taken_f;
+            pred_f2   <= pred_taken_eff;
             valid_f2  <= 1'b0;     // 锟斤拷前 IF2 为锟斤拷锟斤拷路锟斤拷指锟?
             // 锟街革拷取指锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟?锟斤拷目锟斤拷锟街凤拷锟斤拷潜锟斤拷锟?F2 锟斤拷预取锟剿ｏ拷
             // 锟斤拷始锟斤拷锟斤拷锟斤拷为锟斤拷锟杰碉拷址锟斤拷使锟街革拷锟酵憋拷 valid=1锟斤拷只锟斤拷锟脚伙拷指锟饺★拷氐锟斤拷馗锟斤拷锟斤拷锟?
@@ -166,7 +170,7 @@ module riscv_pipeline #(parameter DEPTH = 8192) (
         else begin
             pc_f2     <= a_r;
             instr_f2  <= imem_rd;
-            pred_f2   <= pred_taken_f;
+            pred_f2   <= pred_taken_eff;
             // a_r 未锟狡讹拷锟斤拷 pcf 锟窖讹拷锟斤拷锟斤拷鈫?锟斤拷锟截革拷取锟斤拷为锟斤拷效锟斤拷锟脚撅拷锟斤拷锟斤拷锟斤拷锟斤拷
             valid_f2  <= ((a_r == addr_prev) && (pcf != pcf_prev)) ? 1'b0 : 1'b1;
             addr_prev <= a_r;
@@ -254,7 +258,7 @@ module riscv_pipeline #(parameter DEPTH = 8192) (
     // 转锟斤拷源锟斤拷load 指锟斤拷慕锟斤拷锟斤拷锟节达拷锟斤拷锟斤拷荩锟絩eaddata锟斤拷锟斤拷锟斤拷锟斤拷 ALU 锟斤拷锟斤拷锟斤拷锟街凤拷锟?
     wire [31:0] mem_result_m, wb_result_w;
     assign mem_result_m = resultsrc_m[0] ? readdata_m : alu_result_m;
-    assign wb_result_w  = resultsrc_w[0] ? readdata_w : alu_result_w;
+    // assign wb_result_w  = resultsrc_w[0] ? readdata_w : alu_result_w;  // (v0.8) 移至 WB 段 readdata_final
     forward_unit fu (
         .rs1_e(rs1_e), .rs2_e(rs2_e), .rdm(rd_m), .rdw(rd_w),
         .regwrite_m(regwrite_m & valid_m), .regwrite_w(regwrite_w & valid_w),
@@ -326,7 +330,7 @@ module riscv_pipeline #(parameter DEPTH = 8192) (
     // mispredict 时锟斤拷"实锟斤拷执锟叫凤拷锟斤拷"取目锟疥：锟斤拷支实锟斤拷锟斤拷锟斤拷取 target锟斤拷锟斤拷锟斤拷锟斤拷取 PC+4
     // stall 时 pcf 锟截伙拷锟斤拷 a_r锟斤拷使 stall 锟街革拷锟斤拷印锟斤拷锟揭伙拷锟饺≈革拷锟街?4"锟斤拷锟斤拷锟斤拷
     assign pcf_next = mispredict            ? (branch_taken_e ? branch_target_e : pcplus4_e) :
-                      (pred_taken_f & ~stallf) ? pred_target_f :
+                      (pred_taken_eff & ~stallf) ? pred_target_eff :
                       stallf                ? a_r :
                       pcplus4_f;
 
@@ -363,8 +367,24 @@ module riscv_pipeline #(parameter DEPTH = 8192) (
         .rd_addr2(alu_result_m + 32'd4),
         .wr_addr(alu_result_m),
         .wd(writedata_m),
-        .rd(readdata_m)
+        .rd(readdata_dmem)
     );
+
+
+    reg [31:0] cycle_cnt;
+    always @(posedge clk or posedge reset) begin
+        if (reset) cycle_cnt <= 32'b0;
+        else       cycle_cnt <= cycle_cnt + 32'd1;
+    end
+    wire mmio_read_m = resultsrc_m[0] & valid_m & (alu_result_m == 32'hF0000004);
+    assign readdata_m = mmio_read_m ? cycle_cnt : readdata_dmem;
+    // MMIO 读数据在 WB 段选择（v0.8 修复）：
+    // LOCK_READDATA=0 直通下 readdata_w 随 MEM 段漂移；普通 dmem load 靠 dmem 同步读
+    // 滞后 1 拍碰巧正确，MMIO(cycle_cnt) 则在 WB 段失效落到 readdata_dmem(越界 X)。
+    // 故按 lw 特征(resultsrc_w[0]&valid_w&alu_result_w==F0000004)在 WB 段重选 cycle_cnt。
+    wire mmio_read_w = resultsrc_w[0] & valid_w & (alu_result_w == 32'hF0000004);
+    wire [31:0] readdata_final = mmio_read_w ? cycle_cnt : readdata_w;
+    assign wb_result_w = resultsrc_w[0] ? readdata_final : alu_result_w;
 
     // MMIO 锟侥达拷锟斤拷锟斤拷锟斤拷锟酵�锟斤拷一锟侥ｏ拷锟斤�?FPGA 锟斤拷锟斤拷锟斤拷锟斤拷锟?
     reg io_write_r;
@@ -398,6 +418,6 @@ module riscv_pipeline #(parameter DEPTH = 8192) (
     );
 
     // ================= WB 锟斤拷 =================
-    mux4 #(.W(32)) muxwb (.d0(alu_result_w), .d1(readdata_w), .d2(pcplus4_w),
+    mux4 #(.W(32)) muxwb (.d0(alu_result_w), .d1(readdata_final), .d2(pcplus4_w),
                           .d3(32'b0), .s(resultsrc_w), .y(writedata_w));
 endmodule

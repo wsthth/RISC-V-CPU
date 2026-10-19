@@ -20,6 +20,7 @@ Original Author: Shay Gal-on
    different platforms
 */
 #ifndef CORE_PORTME_H
+#include <stddef.h>
 #define CORE_PORTME_H
 /************************/
 /* Data types and settings */
@@ -28,14 +29,14 @@ Original Author: Shay Gal-on
         Define to 1 if the platform supports floating point.
 */
 #ifndef HAS_FLOAT
-#define HAS_FLOAT 1
+#define HAS_FLOAT 0
 #endif
 /* Configuration : HAS_TIME_H
         Define to 1 if platform has the time.h header file,
         and implementation of functions thereof.
 */
 #ifndef HAS_TIME_H
-#define HAS_TIME_H 1
+#define HAS_TIME_H 0
 #endif
 /* Configuration : USE_CLOCK
         Define to 1 if platform has the time.h header file,
@@ -67,6 +68,9 @@ Original Author: Shay Gal-on
 #else
 #define COMPILER_VERSION "Please put compiler version here (e.g. gcc 4.1)"
 #endif
+#endif
+#ifndef FLAGS_STR
+#define FLAGS_STR "-march=rv32i -mabi=ilp32 -O2"
 #endif
 #ifndef COMPILER_FLAGS
 #define COMPILER_FLAGS \
@@ -127,7 +131,7 @@ typedef ee_u32 CORE_TICKS;
         MEM_STACK - to allocate the data block on the stack (NYI).
 */
 #ifndef MEM_METHOD
-#define MEM_METHOD MEM_STACK
+#define MEM_METHOD MEM_STATIC
 #endif
 
 /* Configuration : MULTITHREAD
