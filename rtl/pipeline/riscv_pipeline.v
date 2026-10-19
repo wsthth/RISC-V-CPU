@@ -125,7 +125,9 @@ module riscv_pipeline #(parameter DEPTH = 8192, parameter PREDICT = 1) (
     reg [31:0] pc_f2;
     reg [31:0] instr_f2;
     reg        pred_f2;
-    reg        valid_f2;   // IF2 锟斤拷效位锟斤拷mispredict 时锟斤拷锟藉（锟斤拷止锟斤拷锟斤拷路锟斤拷指锟斤拷锟斤拷锟斤拷 ID/EX锟斤拷
+    reg        valid_f2;
+    reg [31:0] pred_target_f2;  // IF2 段预测目标（与 pred_f2 同步）
+    reg [31:0] pred_target_e;   // ID/EX 段预测目标（与 pred_e 同步，flush 清 0）   // IF2 锟斤拷效位锟斤拷mispredict 时锟斤拷锟藉（锟斤拷止锟斤拷锟斤拷路锟斤拷指锟斤拷锟斤拷锟斤拷 ID/EX锟斤拷
     // addr_prev/pcf_prev锛氾拷锟街凤拷平锟斤拷锟解。BRAM 同锟斤拷锟斤拷 imem 锟斤拷锟斤拷锟?(a_r, instr)
     // 锟斤拷 pcreg 锟斤拷 1 锟侥ｏ拷mispredict/锟斤拷锟斤拷时 pcreg 锟斤拷锟斤拷锟饺讹拷 pcf_next锟斤拷锟斤拷锟?a_r
     // 锟斤拷 pcf 锟斤拷锟杰筹拷锟斤拷 "同一锟斤拷址锟斤拷锟斤拷锟斤拷取"锟斤拷閲嶅�嶅彇指锟斤拷锟斤拷锟斤拷锟斤�?pcf 锟斤拷未锟狡讹拷锟斤拷
@@ -189,6 +191,26 @@ module riscv_pipeline #(parameter DEPTH = 8192, parameter PREDICT = 1) (
         .pc_in(pc_f2), .instr_in(instr_f), .pred_in(pred_f2), .valid_in(valid_f2),
         .pc(pc_id), .instr(instr_id), .pred(pred_id), .valid(valid_id)
     );
+    // v0.9: 预测目标沿流水传递（IF2 -> ID/EX），供 mispredict 目标一致性检查
+    always @(posedge clk or posedge reset) begin
+        if (reset || reset_d) begin
+            pred_target_f2 <= 32'b0;
+            pred_target_e  <= 32'b0;
+        end
+        else if (mispredict) begin
+            pred_target_f2 <= pred_target_eff;
+            pred_target_e  <= 32'b0;
+        end
+        else if (stallf) begin
+            pred_target_f2 <= pred_target_f2;
+            pred_target_e  <= (flushe | ~valid_id) ? 32'b0 : pred_target_f2;
+        end
+        else begin
+            pred_target_f2 <= pred_target_eff;
+            pred_target_e  <= (flushe | ~valid_id) ? 32'b0 : pred_target_f2;
+        end
+    end
+
     assign pcplus4_f = pcf + 32'd4;
     assign pc = pcf;
     assign instr = instr_f;
@@ -312,9 +334,14 @@ module riscv_pipeline #(parameter DEPTH = 8192, parameter PREDICT = 1) (
     //   * 鏉′欢鍒嗘敮/jal/jalr锛氶�勬祴涓庡疄闄呬笉绗� 鈫?鍐插埛锛堟棦鏈夐�昏緫锛?
     wire pred_taken_nonbranch = pred_e & valid_e & ~(branch_e | jump_e);
     wire jalr_pred_taken      = pred_e & valid_e & jalr_e;
+    // v0.9: BTB 别名污染（PC[8:2] 共享索引）导致预测目标错误：
+    //   方向相同（都 taken）但目标不同 -> 也判 mispredict，按实际目标重定向
+    wire branch_target_mismatch = valid_e & pred_e & ~jalr_e & (branch_e | jump_e) &
+                                 (pred_target_e != branch_target_e);
     assign mispredict = ((branch_e | jump_e) & valid_e & (branch_taken_e != pred_e))
                       | pred_taken_nonbranch
-                      | jalr_pred_taken;
+                      | jalr_pred_taken
+                      | branch_target_mismatch;
     assign pcplus4_e = pc_e + 32'd4;
 
     // ---- 锟斤拷支预锟斤拷锟斤拷锟斤拷锟铰ｏ拷锟斤拷 B 锟斤拷锟斤拷 jal 写锟斤拷 BTB锟斤拷----

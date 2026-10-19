@@ -114,6 +114,15 @@ module tb_coremark;
                          dut.rd_w, dut.regwrite_w, dut.readdata_w, dut.alu_result_w,
                          dut.wb_result_w, dut.writedata_w);
             end
+            // 预测开崩溃窗口（v0.9 修复后新崩溃点）：40340-40383 EX 每拍（core_bench_list 区域）
+            if (cycles >= 40340 && cycles <= 40383) begin
+                $display("[%0d] EX pc=%08X v=%b be=%b je=%b bte=%b pe=%b mp=%b",
+                         cycles, dut.pc_e, dut.valid_e, dut.branch_e, dut.jump_e,
+                         dut.branch_taken_e, dut.pred_e, dut.mispredict);
+                $display("       ac=%08X pn=%08X pcf=%08X ar=%08X btgt=%08X alu=%08X rs1=%08X rs2=%08X",
+                         dut.a_comb, dut.pcf_next, dut.pcf, dut.a_r,
+                         dut.branch_target_e, dut.alu_result_e, dut.rs1e_data, dut.rs2e_data);
+            end
             // PC 回到 _start（程序重启，多发生于 rodata/跳转表读错）
             if (pc == 32'h00000000) begin
                 $display("[%0d] PC->0x0 (jump to _start): ra=%08X a0=%08X sp=%08X", cycles,
