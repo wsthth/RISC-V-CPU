@@ -1,0 +1,85 @@
+<slide>
+  <style>
+    <fill>
+      <fillColor color="rgb(252,252,250)"/>
+    </fill>
+  </style>
+  <data>
+    <line startX="60" startY="64" endX="900" endY="64">
+      <border color="rgb(207,216,228)" width="1"/>
+    </line>
+    <shape type="text" topLeftX="60" topLeftY="36" width="400" height="26">
+      <content textType="caption" fontSize="11" fontFamily="思源宋体" color="rgba(105,120,140,1)" textAlign="left" wrap="false">
+        <p>03 · 关键设计</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="60" topLeftY="84" width="840" height="48">
+      <content textType="headline" fontSize="32" fontFamily="思源宋体" color="rgba(24,38,58,1)" textAlign="left" lineSpacing="multiple:1.2">
+        <p>冒险处理与分支预测：正确性优先的流水线优化</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="60" topLeftY="148" width="290" height="320">
+      <content textType="body" fontSize="16" fontFamily="思源宋体" color="rgba(105,120,140,1)" textAlign="left" lineSpacing="multiple:1.5">
+        <p><span bold="true" color="rgba(24,38,58,1)">设计原则</span></p>
+        <p>以正确性为第一优先级，再做性能优化：所有优化机制均在官方测试集与 CoreMark 回归下验证。</p>
+        <p>数据冒险：全旁路转发（EX / MEM / WB 三级前送），Load-Use 冲突仅插入单周期停顿。</p>
+        <p>控制冒险：分支在 EX 段解析，配合 IF 段预测，错误预测代价为两周期冲洗。</p>
+      </content>
+    </shape>
+    <table topLeftX="372" topLeftY="148" width="528" height="242">
+      <colgroup>
+        <col width="150"/>
+        <col width="240"/>
+        <col width="138"/>
+      </colgroup>
+      <tr height="34">
+        <td>
+          <fill><fillColor color="rgba(24,38,58,1)"/></fill>
+          <content textType="body" fontSize="14" bold="true" color="rgba(255,255,255,1)" textAlign="left"><p>设计点</p></content>
+        </td>
+        <td>
+          <fill><fillColor color="rgba(24,38,58,1)"/></fill>
+          <content textType="body" fontSize="14" bold="true" color="rgba(255,255,255,1)" textAlign="left"><p>实现</p></content>
+        </td>
+        <td>
+          <fill><fillColor color="rgba(24,38,58,1)"/></fill>
+          <content textType="body" fontSize="14" bold="true" color="rgba(255,255,255,1)" textAlign="left"><p>效果</p></content>
+        </td>
+      </tr>
+      <tr height="52">
+        <td><content textType="body" fontSize="13" color="rgba(24,38,58,1)" textAlign="left"><p>数据冒险</p></content></td>
+        <td><content textType="body" fontSize="13" color="rgba(24,38,58,1)" textAlign="left"><p>全旁路转发 + Load-Use 单周期停顿</p></content></td>
+        <td><content textType="body" fontSize="13" color="rgba(81,157,120,1)" textAlign="left"><p>常用序列零气泡</p></content></td>
+      </tr>
+      <tr height="52">
+        <td><content textType="body" fontSize="13" color="rgba(24,38,58,1)" textAlign="left"><p>分支预测</p></content></td>
+        <td><content textType="body" fontSize="13" color="rgba(24,38,58,1)" textAlign="left"><p>2-bit 饱和计数 + BTB 128 项</p></content></td>
+        <td><content textType="body" fontSize="13" color="rgba(81,157,120,1)" textAlign="left"><p>misp 降 67%</p></content></td>
+      </tr>
+      <tr height="52">
+        <td><content textType="body" fontSize="13" color="rgba(24,38,58,1)" textAlign="left"><p>JAL 链接值</p></content></td>
+        <td><content textType="body" fontSize="13" color="rgba(24,38,58,1)" textAlign="left"><p>WB 段写回 pc+4，EX 段旁路</p></content></td>
+        <td><content textType="body" fontSize="13" color="rgba(81,157,120,1)" textAlign="left"><p>call 返回地址正确</p></content></td>
+      </tr>
+      <tr height="52">
+        <td><content textType="body" fontSize="13" color="rgba(24,38,58,1)" textAlign="left"><p>双重提交抑制</p></content></td>
+        <td><content textType="body" fontSize="13" color="rgba(24,38,58,1)" textAlign="left"><p>IF 侧 pc 内容比对，抑制 dup_fetch</p></content></td>
+        <td><content textType="body" fontSize="13" color="rgba(81,157,120,1)" textAlign="left"><p>预测开启全 PASS</p></content></td>
+      </tr>
+    </table>
+    <shape type="text" topLeftX="372" topLeftY="404" width="528" height="76">
+      <content textType="body" fontSize="14" fontFamily="思源宋体" color="rgba(105,120,140,1)" textAlign="left" lineSpacing="multiple:1.4">
+        <p>调试要点：预测开启后曾出现指令双重提交导致 rvtest 3 项失败，通过 IF 段</p>
+        <p><span bold="true" color="rgba(81,157,120,1)">pc 内容比对 + valid 抑制</span>（v0.15 内容比对方案）闭环，回归 175 条用例全绿。</p>
+      </content>
+    </shape>
+  </data>
+  <note>
+    <content textType="body">
+      <p>本页介绍流水线的两个核心优化方向：冒险处理与分支预测。</p>
+      <p>数据冒险通过全旁路转发解决，只有 Load-Use 冲突才需要插入一个周期的停顿。</p>
+      <p>分支预测采用 2-bit 饱和计数器配合 BTB，预测错误率从最初的 18 万次下降到约 6 万次。</p>
+      <p>期间最重要的调试成果是解决了预测开启后的指令双重提交问题，这是正确性保障的关键。</p>
+    </content>
+  </note>
+</slide>

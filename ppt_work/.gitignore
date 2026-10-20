@@ -1,0 +1,5 @@
+shots/
+deck_*.xml
+xml_resp*.json
+check_lint*.py
+.lark-slides/

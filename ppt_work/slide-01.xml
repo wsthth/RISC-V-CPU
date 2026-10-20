@@ -1,0 +1,44 @@
+<slide>
+  <style>
+    <fill>
+      <fillColor color="rgb(252,252,250)"/>
+    </fill>
+  </style>
+  <data>
+    <line startX="80" startY="180" endX="880" endY="180">
+      <border color="rgb(83,133,189)" width="3"/>
+    </line>
+    <shape type="text" topLeftX="80" topLeftY="120" width="820" height="56">
+      <content textType="title" fontSize="42" fontFamily="思源宋体" color="rgba(24,38,58,1)" textAlign="left" lineSpacing="multiple:1.2">
+        <p>基于 RISC-V 的高性能 CPU 设计</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="80" topLeftY="200" width="820" height="44">
+      <content textType="sub-headline" fontSize="26" fontFamily="思源宋体" color="rgba(24,38,58,1)" textAlign="left">
+        <p>与 FPGA 验证</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="80" topLeftY="268" width="820" height="36">
+      <content textType="body" fontSize="18" fontFamily="思源宋体" color="rgba(81,157,120,1)" textAlign="left" lineSpacing="multiple:1.2">
+        <p>集创汇 2026 七星微杯 · RV32I 五级流水线处理器 · 分支预测与冒险处理</p>
+      </content>
+    </shape>
+    <line startX="80" startY="330" endX="300" endY="330">
+      <border color="rgb(83,133,189)" width="1"/>
+    </line>
+    <shape type="text" topLeftX="80" topLeftY="356" width="820" height="100">
+      <content textType="body" fontSize="16" fontFamily="思源宋体" color="rgba(105,120,140,1)" textAlign="left" lineSpacing="multiple:1.4">
+        <p>参赛团队：XXX（占位）</p>
+        <p>所属单位：XXX大学（占位）</p>
+        <p>日期：2026 年 10 月</p>
+      </content>
+    </shape>
+  </data>
+  <note>
+    <content textType="body">
+      <p>各位评委老师好，我们团队的作品是基于 RISC-V 的高性能 CPU 设计与 FPGA 验证。</p>
+      <p>项目实现了一个完整的 RV32I 五级流水线处理器，包含分支预测、冒险处理等关键优化，并通过仿真与 FPGA 上板完成全流程验证。</p>
+      <p>下面我从项目背景、架构设计、关键机制、验证结果和上板演示几个方面进行汇报。</p>
+    </content>
+  </note>
+</slide>

@@ -1,0 +1,52 @@
+<slide>
+  <style>
+    <fill>
+      <fillColor color="rgb(252,252,250)"/>
+    </fill>
+  </style>
+  <data>
+    <line startX="60" startY="64" endX="900" endY="64">
+      <border color="rgb(207,216,228)" width="1"/>
+    </line>
+    <shape type="text" topLeftX="60" topLeftY="36" width="400" height="26">
+      <content textType="caption" fontSize="11" fontFamily="思源宋体" color="rgba(105,120,140,1)" textAlign="left" wrap="false">
+        <p>06 · 总结与展望</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="60" topLeftY="84" width="840" height="48">
+      <content textType="headline" fontSize="32" fontFamily="思源宋体" color="rgba(24,38,58,1)" textAlign="left" lineSpacing="multiple:1.2">
+        <p>总结：全流程自研交付，评分项覆盖完成</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="60" topLeftY="150" width="420" height="320">
+      <content textType="body" fontSize="16" fontFamily="思源宋体" color="rgba(105,120,140,1)" textAlign="left" lineSpacing="multiple:1.4">
+        <p><span bold="true" color="rgba(24,38,58,1)">已交付</span></p>
+        <p>01 · RV32I 指令集全集，自研汇编器与链接工具链</p>
+        <p>02 · 五级流水线 + 全旁路 + 2-bit 分支预测 + BTB 128 项</p>
+        <p>03 · riscv-tests 40/42、CoreMark PASS、matmul / qsort 通过</p>
+        <p>04 · 4141 LUT（&lt;5K）、4 BRAM，Zynq-7020 上板验证成功</p>
+        <p>05 · 设计文档、仿真报告、答辩演示全套交付</p>
+      </content>
+    </shape>
+    <line startX="500" startY="150" endX="500" endY="470">
+      <border color="rgb(207,216,228)" width="1"/>
+    </line>
+    <shape type="text" topLeftX="540" topLeftY="150" width="360" height="320">
+      <content textType="body" fontSize="16" fontFamily="思源宋体" color="rgba(105,120,140,1)" textAlign="left" lineSpacing="multiple:1.4">
+        <p><span bold="true" color="rgba(24,38,58,1)">展望</span></p>
+        <p>· 双发射 / 超标量：突破 IPC 1.0 结构上限，逼近赛题 250 次/秒折算口径</p>
+        <p>· M 扩展：硬件乘除，减少软件库调用开销</p>
+        <p>· UART 输出：CoreMark 完整跑分结果直接上板打印</p>
+        <p>· 更低资源：进一步压缩 LUT，适配更多目标板卡</p>
+      </content>
+    </shape>
+  </data>
+  <note>
+    <content textType="body">
+      <p>总结：我们从指令集、汇编器到流水线架构、分支预测，再到仿真验证与 FPGA 上板，全流程自主完成。</p>
+      <p>官方测试集、CoreMark 基准、应用演示均通过，资源占用低于赛题约束。</p>
+      <p>展望方面，如果要冲击 250 次/秒的满分项，需要超标量架构提升 IPC，这是我们后续可以探索的方向。</p>
+      <p>以上就是我们的全部汇报，感谢各位评委老师。</p>
+    </content>
+  </note>
+</slide>

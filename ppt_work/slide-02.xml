@@ -1,0 +1,71 @@
+<slide>
+  <style>
+    <fill>
+      <fillColor color="rgb(252,252,250)"/>
+    </fill>
+  </style>
+  <data>
+    <line startX="60" startY="64" endX="900" endY="64">
+      <border color="rgb(207,216,228)" width="1"/>
+    </line>
+    <shape type="text" topLeftX="60" topLeftY="36" width="400" height="26">
+      <content textType="caption" fontSize="11" fontFamily="思源宋体" color="rgba(105,120,140,1)" textAlign="left" wrap="false">
+        <p>01 · 项目背景与目标</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="60" topLeftY="84" width="840" height="52">
+      <content textType="headline" fontSize="32" fontFamily="思源宋体" color="rgba(24,38,58,1)" textAlign="left" lineSpacing="multiple:1.2">
+        <p>从指令集到可上板处理器：全流程自研</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="60" topLeftY="148" width="840" height="96">
+      <content textType="body" fontSize="17" fontFamily="思源宋体" color="rgba(105,120,140,1)" textAlign="left" lineSpacing="multiple:1.4">
+        <p>基于 RISC-V 开放指令集规范，从零实现 RV32I 五级流水线处理器：自研汇编器与工具链、流水线架构设计、</p>
+        <p>分支预测与冒险处理、BRAM 存储子系统，并通过官方测试集、CoreMark 基准与 FPGA 上板完成全流程验证。</p>
+      </content>
+    </shape>
+    <table topLeftX="60" topLeftY="266" width="840" height="196">
+      <colgroup>
+        <col width="240"/>
+        <col width="600"/>
+      </colgroup>
+      <tr height="36">
+        <td>
+          <fill><fillColor color="rgba(24,38,58,1)"/></fill>
+          <content textType="body" fontSize="15" bold="true" color="rgba(255,255,255,1)" textAlign="left"><p>设计指标</p></content>
+        </td>
+        <td>
+          <fill><fillColor color="rgba(24,38,58,1)"/></fill>
+          <content textType="body" fontSize="15" bold="true" color="rgba(255,255,255,1)" textAlign="left"><p>完成情况</p></content>
+        </td>
+      </tr>
+      <tr height="32">
+        <td><content textType="body" fontSize="14" color="rgba(24,38,58,1)" textAlign="left"><p>指令集</p></content></td>
+        <td><content textType="body" fontSize="14" color="rgba(24,38,58,1)" textAlign="left"><p>RV32I 全集（R/I/S/B/U/J 六种编码格式）</p></content></td>
+      </tr>
+      <tr height="32">
+        <td><content textType="body" fontSize="14" color="rgba(24,38,58,1)" textAlign="left"><p>微架构</p></content></td>
+        <td><content textType="body" fontSize="14" color="rgba(24,38,58,1)" textAlign="left"><p>五级流水线 IF/ID/EX/MEM/WB，全旁路转发 + Load-Use 停顿</p></content></td>
+      </tr>
+      <tr height="32">
+        <td><content textType="body" fontSize="14" color="rgba(24,38,58,1)" textAlign="left"><p>分支预测</p></content></td>
+        <td><content textType="body" fontSize="14" color="rgba(24,38,58,1)" textAlign="left"><p>2-bit 饱和计数 + BTB 128 项 + JAL/JALR 预测</p></content></td>
+      </tr>
+      <tr height="32">
+        <td><content textType="body" fontSize="14" color="rgba(24,38,58,1)" textAlign="left"><p>基准测试</p></content></td>
+        <td><content textType="body" fontSize="14" color="rgba(24,38,58,1)" textAlign="left"><p>riscv-tests 40/42 通过，CoreMark 跑分输出，matmul/qsort 应用演示</p></content></td>
+      </tr>
+      <tr height="32">
+        <td><content textType="body" fontSize="14" color="rgba(24,38,58,1)" textAlign="left"><p>FPGA 资源</p></content></td>
+        <td><content textType="body" fontSize="14" color="rgba(24,38,58,1)" textAlign="left"><p>4141 Slice LUT、4 BRAM（Zynq-7020，满足小于 5K LUT）</p></content></td>
+      </tr>
+    </table>
+  </data>
+  <note>
+    <content textType="body">
+      <p>项目背景：RISC-V 是开放的指令集架构，赛题要求基于 RV32I 设计高性能处理器并在 FPGA 上验证。</p>
+      <p>我们的设计目标覆盖指令集实现、流水线架构、分支预测、基准测试和资源约束五个维度。</p>
+      <p>全部指标均已达成，其中 FPGA 资源实测 4141 LUT，低于赛题 5K LUT 的约束。</p>
+    </content>
+  </note>
+</slide>
