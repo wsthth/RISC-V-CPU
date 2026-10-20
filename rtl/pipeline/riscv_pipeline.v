@@ -127,7 +127,8 @@ module riscv_pipeline #(parameter DEPTH = 8192, parameter PREDICT = 1) (
     reg        pred_f2;
     reg        valid_f2;
     reg [31:0] pred_target_f2;  // IF2 段预测目标（与 pred_f2 同步）
-    reg [31:0] pred_target_e;   // ID/EX 段预测目标（与 pred_e 同步，flush 清 0）   // IF2 锟斤拷效位锟斤拷mispredict 时锟斤拷锟藉（锟斤拷止锟斤拷锟斤拷路锟斤拷指锟斤拷锟斤拷锟斤拷 ID/EX锟斤拷
+    wire [31:0] pred_target_id;   // v0.12 pred_target pipeline regs
+    wire [31:0] pred_target_e;   // ID/EX 段预测目标（与 pred_e 同步，flush 清 0）   // IF2 锟斤拷效位锟斤拷mispredict 时锟斤拷锟藉（锟斤拷止锟斤拷锟斤拷路锟斤拷指锟斤拷锟斤拷锟斤拷 ID/EX锟斤拷
     // addr_prev/pcf_prev锛氾拷锟街凤拷平锟斤拷锟解。BRAM 同锟斤拷锟斤拷 imem 锟斤拷锟斤拷锟?(a_r, instr)
     // 锟斤拷 pcreg 锟斤拷 1 锟侥ｏ拷mispredict/锟斤拷锟斤拷时 pcreg 锟斤拷锟斤拷锟饺讹拷 pcf_next锟斤拷锟斤拷锟?a_r
     // 锟斤拷 pcf 锟斤拷锟杰筹拷锟斤拷 "同一锟斤拷址锟斤拷锟斤拷锟斤拷取"锟斤拷閲嶅�嶅彇指锟斤拷锟斤拷锟斤拷锟斤�?pcf 锟斤拷未锟狡讹拷锟斤拷
@@ -180,6 +181,24 @@ module riscv_pipeline #(parameter DEPTH = 8192, parameter PREDICT = 1) (
         end
     end
     assign instr_f = instr_f2;
+    // v0.15: suppress the spurious DOUBLE CAPTURE at reg_ifid by comparing
+    // the IF2 content against the ID content (NOT the fetch address):
+    //   dup = (pc_f2 == pc_id) && valid_id && ~pred_taken_eff
+    // The IF2 register lags a_r by one cycle. After a load-use stall release
+    // the else-branch re-captures the frozen a_r, so the IF2 holds the same
+    // instruction for an extra cycle and reg_ifid re-captures it (double
+    // commit), while a_r has already advanced - an address-based rule misses
+    // this dup and later false-positives on the legitimate next capture.
+    // Content equality (same pc still valid in ID) catches all dup sources:
+    //  - stall-release lag (lbu re-captured, sw skipped - full.s FAIL)
+    //  - pred-taken redirect target re-read (CoreMark double commit)
+    //  - mispredict target repeat (flush clears valid_id -> not suppressed,
+    //    the intended target capture is protected)
+    // ~pred_taken_eff: self-loops / branch chains whose address IS predicted
+    // taken (j to itself) are architecturally correct re-executions - never
+    // suppress them.
+    wire        dup_fetch;
+    wire        valid_ifid_in;
 
     // ---- IF/ID 锟侥达拷锟斤拷锟斤拷reg_ifid锟斤拷锟斤拷stall 时 enable=0 锟斤拷锟街ｏ拷mispredict 时 flush----
     wire [31:0] pc_id, instr_id;
@@ -188,26 +207,26 @@ module riscv_pipeline #(parameter DEPTH = 8192, parameter PREDICT = 1) (
         .clk(clk), .reset(reset),
         .enable(~stalld),      // load-use stall 时锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 ID 锟斤拷指锟矫碉拷锟斤拷锟斤拷
         .flush(mispredict),    // 锟斤拷锟街э拷锟斤拷锟剿?
-        .pc_in(pc_f2), .instr_in(instr_f), .pred_in(pred_f2), .valid_in(valid_f2),
-        .pc(pc_id), .instr(instr_id), .pred(pred_id), .valid(valid_id)
+        .pc_in(pc_f2), .instr_in(instr_f), .pred_in(pred_f2), .valid_in(valid_ifid_in),
+        .pred_target_in(pred_target_f2),
+        .pc(pc_id), .instr(instr_id), .pred(pred_id), .valid(valid_id),
+        .pred_target(pred_target_id)
     );
+    assign dup_fetch = (pc_f2 == pc_id) && valid_id && ~pred_taken_eff;
+    assign valid_ifid_in = dup_fetch ? 1'b0 : valid_f2;
     // v0.9: 预测目标沿流水传递（IF2 -> ID/EX），供 mispredict 目标一致性检查
     always @(posedge clk or posedge reset) begin
         if (reset || reset_d) begin
             pred_target_f2 <= 32'b0;
-            pred_target_e  <= 32'b0;
         end
         else if (mispredict) begin
             pred_target_f2 <= pred_target_eff;
-            pred_target_e  <= 32'b0;
         end
         else if (stallf) begin
             pred_target_f2 <= pred_target_f2;
-            pred_target_e  <= (flushe | ~valid_id) ? 32'b0 : pred_target_f2;
         end
         else begin
             pred_target_f2 <= pred_target_eff;
-            pred_target_e  <= (flushe | ~valid_id) ? 32'b0 : pred_target_f2;
         end
     end
 
@@ -266,12 +285,14 @@ module riscv_pipeline #(parameter DEPTH = 8192, parameter PREDICT = 1) (
         .pc_d(pc_id), .rd1_d(rd1_d), .rd2_d(rd2_d), .immext_d(immext_d),
         .rs1_d(rs1_d), .rs2_d(rs2_d), .rd_d(rd_d),
         .funct3_d(funct3_d), .funct7_d(funct7_d), .opcode_d(opcode_d), .pred_d(pred_id),
+        .pred_target_d(pred_target_id),
         .regwrite(regwrite_e), .alusrca(alusrca_e), .alusrcb(alusrcb_e),
         .memwrite(memwrite_e), .branch(branch_e), .jump(jump_e),
         .resultsrc(resultsrc_e), .aluop(aluop_e), .jalr(jalr_e),
         .pc(pc_e), .rd1(rd1_e), .rd2(rd2_e), .immext(immext_e),
         .rs1(rs1_e), .rs2(rs2_e), .rd(rd_e),
         .funct3(funct3_e), .funct7(funct7_e), .opcode(opcode_e), .pred(pred_e),
+        .pred_target(pred_target_e),
         .valid(valid_e)
     );
 
@@ -279,7 +300,8 @@ module riscv_pipeline #(parameter DEPTH = 8192, parameter PREDICT = 1) (
     // ---- 锟斤拷路转锟斤拷 ----
     // 转锟斤拷源锟斤拷load 指锟斤拷慕锟斤拷锟斤拷锟节达拷锟斤拷锟斤拷荩锟絩eaddata锟斤拷锟斤拷锟斤拷锟斤拷 ALU 锟斤拷锟斤拷锟斤拷锟街凤拷锟?
     wire [31:0] mem_result_m, wb_result_w;
-    assign mem_result_m = resultsrc_m[0] ? readdata_m : alu_result_m;
+    assign mem_result_m = (resultsrc_m == 2'b10) ? pcplus4_m :
+                      (resultsrc_m[0] ? readdata_m : alu_result_m);   // v0.13 JAL link forward
     // assign wb_result_w  = resultsrc_w[0] ? readdata_w : alu_result_w;  // (v0.8) 移至 WB 段 readdata_final
     forward_unit fu (
         .rs1_e(rs1_e), .rs2_e(rs2_e), .rdm(rd_m), .rdw(rd_w),
@@ -411,7 +433,8 @@ module riscv_pipeline #(parameter DEPTH = 8192, parameter PREDICT = 1) (
     // 故按 lw 特征(resultsrc_w[0]&valid_w&alu_result_w==F0000004)在 WB 段重选 cycle_cnt。
     wire mmio_read_w = resultsrc_w[0] & valid_w & (alu_result_w == 32'hF0000004);
     wire [31:0] readdata_final = mmio_read_w ? cycle_cnt : readdata_w;
-    assign wb_result_w = resultsrc_w[0] ? readdata_final : alu_result_w;
+    assign wb_result_w = (resultsrc_w == 2'b10) ? pcplus4_w :
+                      (resultsrc_w[0] ? readdata_final : alu_result_w);   // v0.13 JAL link forward
 
     // MMIO 锟侥达拷锟斤拷锟斤拷锟斤拷锟酵�锟斤拷一锟侥ｏ拷锟斤�?FPGA 锟斤拷锟斤拷锟斤拷锟斤拷锟?
     reg io_write_r;

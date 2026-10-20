@@ -28,18 +28,18 @@ module branch_predictor (
     input  [31:0]     branch_pc,        // EX ¶Î PC
     input  [31:0]     branch_target     // EX ¶ÎÄ¿±êµØÖ·
 );
-    localparam N = 128;
+    localparam N = 1024;   // v0.11: 128->1024, PC[11:2] idx eliminate alias eviction
 
     reg [1:0]   counter [0:N-1];
     reg         valid   [0:N-1];
     reg [31:0]  btb     [0:N-1];
-    reg [22:0]  tag     [0:N-1];   // v0.10: PC[31:9] tag, fix alias pollution
+    reg [19:0]  tag     [0:N-1];   // v0.11: PC[31:12] tag (1024-entry, PC[11:2] idx)
     integer i;
 
-    wire [6:0] idx_f = pcf[8:2];
-    wire [6:0] idx_e = branch_pc[8:2];
+    wire [9:0] idx_f = pcf[11:2];
+    wire [9:0] idx_e = branch_pc[11:2];
 
-    assign pred_taken  = valid[idx_f] & (tag[idx_f] == pcf[31:9]) & counter[idx_f][1];
+    assign pred_taken  = valid[idx_f] & (tag[idx_f] == pcf[31:12]) & counter[idx_f][1];
     assign pred_target = btb[idx_f];
 
     always @(posedge clk or posedge reset) begin
@@ -48,14 +48,14 @@ module branch_predictor (
                 counter[i] <= 2'b00;
                 valid[i]   <= 1'b0;
                 btb[i]     <= 32'b0;
-                tag[i]     <= 23'b0;
+                tag[i]     <= 20'b0;
             end
         end
         else if (branch_resolved) begin
             if (branch_taken) begin
                 valid[idx_e]   <= 1'b1;
                 btb[idx_e]     <= branch_target;
-                tag[idx_e]     <= branch_pc[31:9];
+                tag[idx_e]     <= branch_pc[31:12];
                 counter[idx_e] <= (counter[idx_e] == 2'b11) ? 2'b11 : counter[idx_e] + 2'b01;
             end
             else begin

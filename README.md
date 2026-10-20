@@ -112,10 +112,27 @@ RISC-V/
    - 全量 riscv-tests **40/42 PASS + 2 SKIP**（组合旁路版无回归）；ld_st PASS 1242 cycles
 
 ### 🔨 开发中
-5. 应用演示：矩阵乘法 + 快速排序（仿真 + 上板 + 演示视频）
-6. CoreMark 仿真跑分（RV32I 裸机移植 + iterations/s 换算）
+5. 应用演示：矩阵乘法 + 快速排序（仿真通过，上板验证待 CoreMark 收尾后随新 bit 一起做）
+6. CoreMark 仿真跑分：预测开 **PASS（cycles=1,152,213，~87/s@100MHz）**；250/s 目标待 M 扩展硬件乘除 / 2-bit 预测器增强 / 上板升频
 7. 正式设计文档（Word/PDF）
-8. FPGA 上板收尾：AC7021B 已实机 LED 闪烁验证通过；SUME 板约束引脚核对；BRAM 化后比特流重出 + 上板验证
+8. FPGA 上板收尾：AC7021B 已实机 LED 闪烁验证通过；BRAM 化 + v0.15 后比特流需重出 + CoreMark 上板验证；SUME 板约束引脚核对
+
+## CoreMark 跑分（程序演示）
+
+- 工具链：xpack riscv-none-elf-gcc-14.3.0，`-O2 -march=rv32i` 裸机编译 CoreMark 1.0
+- 移植（`testprog/` 内联）：portme 定制——EE_TICKS_PER_SEC=1e8，MMIO 计时/输出，ITERATIONS=1，
+  CoreMark 自校验结果经 gp(x3) 返回，tb 判定 gp==1 为 PASS（CRC 内部全检：seedcrc=0xe9f5、crclist=0xe714、crcmatrix=0x1fd7、crcstate=0x8e3a）
+- 仿真：`powershell -File sim\scripts\run_sim.ps1 -TB tb_coremark -HEX testprog\hex\coremark1.hex -DATA testprog\hex\coremark1.data.hex`
+
+| 版本 | 预测 | 结果 | cycles | inst | stall | misp | 折算 CoreMark/s@100MHz |
+|---|---|---|---|---|---|---|---|
+| v0.10 | 开 | PASS | 1,522,013 | 778,519 | 14,625 | 183,857 | ~68 |
+| v0.13 | 开 | CRC 错（双重提交） | 1,160,430 | — | — | 59,868 | ~86（无效） |
+| v0.15 | 开 | **PASS** | **1,152,213** | 778,470 | 11,911 | **59,431** | **~87** |
+| v0.15 | 关 | PASS（对照） | 1,423,194 | — | — | — | ~70 |
+
+- 双重提交（双重提交抑制）修复后预测开与预测关结果一致，CoreMark 自校验全过（详见 risc-v.md v0.13-v0.15）
+- 250/s@100MHz 差 ~2.9x：主攻 M 扩展硬件乘除（__umodsi3/__udivsi3 为热点）
 
 ## FPGA 上板（已完成 ZedBoard 全流程）
 
@@ -169,3 +186,11 @@ powershell -File sim\scripts\run_sim.ps1 -TB tb_single -HEX testprog\hex\basic.h
 - **v0.5.2（2026-10-18）**：BRAM 单写口边界收口——跨字写（sh off=3/sw off!=0 双地址写）综合无法推断 BRAM，回退单地址字节使能写（mem/mem1 同地址镜像）；riscv_pipeline 新增 ASYNC_DMEM 宏分离仿真语义；修复综合失败，7 TB 回归全 PASS（详见 risc-v.md 第 10 次记录）
 - **v0.6（2026-10-18）**：BRAM 化收官——dmem 纯同步读 + rd_addr2 双读口 + 组合层写通旁路，imem/dmem 全推断 Block RAM，Slice LUTs 12059→**3154（<5K 达标）**、LUTRAM 3632→48、BRAM×4；riscv-tests 40/42 无回归（详见 risc-v.md 第 11/12 次记录）
 - **v0.5（2026-10-16）**：BRAM 可综合化收口 + ld_st 修复——真同步读（bram_write 字节使能写）、reset_d、stall IF2 完全保持、hazard_unit 排除 LUI/AUIPC/JAL 无源指令（ld_st 由 FAIL 转 PASS）；7 个回归 TB 全 PASS，riscv-tests 40/42（详见 risc-v.md 第 8 次记录）
+- **v0.7-v0.8（2026-10-18）**：CoreMark 工具链就绪——xpack riscv-none-elf-gcc-14.3.0 编译 CoreMark 1.0（RV32I 裸机移植，portme 定制：MMIO 计时/输出 + 自校验返回 gp）；imem/dmem 扩容 64KB/128KB；CoreMark 仿真跑分 + 周期计数（coremark1.hex/.data.hex 已入库）
+- **v0.9-v0.10（2026-10-18）**：预测器正确性闭环 1——BTB 增加 23bit tag（8 位 PC 撞 tag 误命中导致跳转错乱）；pred_target 影子链错位修复（v0.12 进一步真流水化）；JAL 链接值转发修复（resultsrc==2'b10 转发 pcplus4，修掉 `call` 后 ra 被腐蚀的自循环）；预测开 CoreMark 完整 PASS、CRC 与官方一致；riscv-tests 40/42 无回归
+- **v0.11（2026-10-18）**：BTB 128→1024 扩容——**无收益（死路，已回退）**，瓶颈是预测器正确性而非容量
+- **v0.12（2026-10-19）**：pred_target 真流水化——reg_ifid/reg_idex 增加 pred_target 端口，与 pc/instr/valid 同步
+- **v0.13（2026-10-19）**：定位 CoreMark 预测开 CRC 错最终根因——**双重提交**（预测 taken 重定向目标被 reg_ifid 重复捕获；提交流 diff 首个分歧 committed#18931，EV 窗口探针证实物理环路）；预测开 cycles 1,160,430（86.2/s）但 CRC 仍错
+- **v0.14（2026-10-19）**：dup_fetch 抑制三轮失败并回退——纯组合 valid 抑制误伤 mispredict 目标捕获（memset 死循环）；redirect_prev 破坏 j 自循环（pc=0x2e40 挂死）；地址比对判据（a_r==addr_prev 且 pcf!=pcf_prev）在 stall 释放场景方向反了（IF2 比 a_r 慢一拍，真实重复时判据不命中、合法指令被误杀）——**地址判据错，应比内容**
+- **v0.15（2026-10-20）**：**内容比对 dup_fetch 正解**——`dup_fetch=(pc_f2==pc_id)&&valid_id&&~pred_taken_eff`（比 IF2 与 ID 的内容，mispredict 目标由 valid_id==0 保护，自循环由 ~pred_taken_eff 保护）；全绿：回归 PASS（175 cycles，lbu@0x104 仅一次、sw@0x108 不再丢失）/ riscv-tests 40/42 / **CoreMark 预测开 PASS（cycles=1,152,213，misp 59,431，较 v0.10 的 183,857 降 3.1x）** / matmul PASS（gp=1, 8,503 cycles）/ qsort PASS（gp=1, 871 cycles）
+- **v0.15.1（2026-10-20）**：流程硬化——matmul/qsort 验证改走 tb_rvtest（gp 判定，原 tb_pipe_full 检查逻辑为 full.s 专用）；run_sim.ps1 的 tb_pipe_full 默认加载 full.hex（修复残留 program.hex 串扰回归）；run_sim.ps1 重写为纯 ASCII（修复 Edit 破坏 GBK 编码导致 PowerShell 解析失败）

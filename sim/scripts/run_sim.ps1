@@ -1,26 +1,33 @@
 # =============================================================================
-# run_sim.ps1 - Vivado 2019.1 xsim 仿真脚本
-# 用法：
+# run_sim.ps1 - Vivado 2019.1 xsim launcher (ASCII only, no encoding issues)
+# Usage:
 #   powershell -File run_sim.ps1 -TB tb_alu
-#   powershell -File run_sim.ps1 -TB tb_single -HEX ..\..\testprog\hex\basic.hex
-#   powershell -File run_sim.ps1 -TB tb_dmem -Wave
-# 说明：
-#   - 自动编译 rtl/ 下全部 Verilog + sim/tb/<TB>.v
-#   - 在 sim/work/<TB>/ 下运行，program.hex / data.hex 由脚本复制到该目录
-#   - -Wave 时输出 waves.vcd（可用 xsim 或 GTKWave 打开）
-#   - 结束时打印 TEST PASSED / TEST FAILED / 超时信息
+#   powershell -File run_sim.ps1 -TB tb_pipe_full
+#   powershell -File run_sim.ps1 -TB tb_pipe_full -HEX ..\..\testprog\hex\matmul.hex -DATA ..\..\testprog\hex\matmul.data.hex
+#   powershell -File run_sim.ps1 -TB tb_coremark -HEX ..\..\testprog\hex\coremark1.hex -DATA ..\..\testprog\hex\coremark1.data.hex -Define PREDICT_OFF
+# Notes:
+#   - compiles all RTL *.v + sim/tb/<TB>.v into library work
+#   - runs in sim/work/<TB>/ ; program.hex / data.hex are copied by this script
+#   - -Wave: dump waves.vcd
+#   - prints TEST PASSED / TEST FAILED / timeout info
 # =============================================================================
 param(
     [Parameter(Mandatory=$true)][string]$TB,
     [string]$HEX = "",
     [string]$DATA = "",
     [switch]$Wave,
-    [string]$Define = ""   # 额外宏，如 -Define ASYNC_DMEM（逗号分隔多个）
+    [string]$Define = ""
 )
 
 $vivado = "D:\Xilinx\Vivado\2019.1\bin"
 $root   = "D:\my_project\RISC-V"
 $work   = Join-Path $root ("sim\work\" + $TB)
+
+# tb_pipe_full regression defaults to full.hex so a stale program.hex
+# left by a previous -HEX run cannot leak into the regression.
+if ($TB -eq "tb_pipe_full" -and -not $HEX) {
+    $HEX = Join-Path $root "testprog\hex\full.hex"
+}
 
 New-Item -ItemType Directory -Force -Path $work | Out-Null
 if ($HEX  -and (Test-Path $HEX))  { Copy-Item $HEX  (Join-Path $work "program.hex") -Force }
@@ -28,7 +35,7 @@ if ($DATA -and (Test-Path $DATA)) { Copy-Item $DATA (Join-Path $work "data.hex")
 
 Set-Location $work
 
-# ---- 1. 编译 RTL + TB ----
+# ---- 1. compile all RTL + TB ----
 $rtlFiles = @()
 Get-ChildItem (Join-Path $root "rtl") -Filter *.v -Recurse | Sort-Object FullName |
     ForEach-Object { $rtlFiles += $_.FullName }
@@ -42,12 +49,12 @@ if ($Define) { foreach ($m in ($Define -split ',')) { if ($m) { $defineArgs += "
 & "$vivado\xvlog.bat" -work work $defineArgs $rtlFiles $tbFile 2>&1 | Out-Host
 if ($LASTEXITCODE -ne 0) { Write-Host "COMPILE FAILED"; exit 1 }
 
-# ---- 2. 例化 ----
+# ---- 2. elaborate ----
 Write-Host "== xelab =="
 & "$vivado\xelab.bat" -L work -debug typical $TB -s sim_snapshot 2>&1 | Out-Host
 if ($LASTEXITCODE -ne 0) { Write-Host "ELAB FAILED"; exit 1 }
 
-# ---- 3. 运行 ----
+# ---- 3. simulate ----
 Write-Host "== xsim =="
 if ($Wave) {
     $tcl = "open_vcd `"waves.vcd`"`nlog_vcd [get_objects -r /$TB/*]`nrun all`nclose_vcd`nquit`n"
@@ -58,7 +65,7 @@ $tcl | Out-File -FilePath (Join-Path $work "run.tcl") -Encoding ascii
 $simout = & "$vivado\xsim.bat" sim_snapshot -t run.tcl 2>&1
 $simout | Out-Host
 
-# ---- 4. 结果 ----
+# ---- 4. verdict ----
 if ($simout -match "TEST PASSED") {
     Write-Host ">>> RESULT: PASS"
     exit 0

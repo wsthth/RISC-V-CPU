@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 // ============================================================================
-// tb_pipe_full.v - RV32I È«Ö¸Áî¼¯ÏµÍ³¼¶²âÊÔ£¨Îå¼¶Á÷Ë®Ïß£©
-// ÔËÐÐ full.s£¬¼ì²é DMEM[0x300..0x3BC]£¬º¬ÏÝÚå£¨²»Ó¦Ö´ÐÐÂ·¾¶£©¼ì²é
+// tb_pipe_full.v - RV32I È«Ö¸ï¿½î¼¯ÏµÍ³ï¿½ï¿½ï¿½ï¿½ï¿½Ô£ï¿½ï¿½å¼¶ï¿½ï¿½Ë®ï¿½ß£ï¿½
+// ï¿½ï¿½ï¿½ï¿½ full.sï¿½ï¿½ï¿½ï¿½ï¿½ DMEM[0x300..0x3BC]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½å£¨ï¿½ï¿½Ó¦Ö´ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 // ============================================================================
 module tb_pipe_full;
     reg        clk = 0;
@@ -38,7 +38,7 @@ module tb_pipe_full;
         #10;
         repeat (4) @(posedge clk);
         reset = 0;
-        while (!halted && cycles < 3000) begin
+        while (!halted && cycles < 60000) begin
             @(posedge clk);
             cycles = cycles + 1;
             if (pc == pc_prev && pc == pc_prev2 && pc == pc_prev3 && pc == pc_prev4)
@@ -46,6 +46,7 @@ module tb_pipe_full;
             pc_prev4 = pc_prev3; pc_prev3 = pc_prev2; pc_prev2 = pc_prev; pc_prev = pc;
         end
         $display("cycles=%0d halted=%0d pc=%08X", cycles, halted, pc);
+        $display("DMEM200=%08X %08X %08X %08X", dut.dmem_i.mem[32'h200>>2], dut.dmem_i.mem[32'h204>>2], dut.dmem_i.mem[32'h208>>2], dut.dmem_i.mem[32'h20C>>2]);
         if (!halted) begin
             $display("FAIL: CPU did not halt (timeout)");
             $display("TEST FAILED (pipe_full)");
@@ -58,28 +59,28 @@ module tb_pipe_full;
                      dut.dmem_i.mem[(32'h00000304) >> 2]);
             errors = errors + 1;
         end
-        // ---- 2. R ÐÍËãÊõ ----
+        // ---- 2. R ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ----
         check_mem(32'h08, 32'h00000089, "add");    // 137
         check_mem(32'h0C, 32'h0000003F, "sub");    // 63
-        // ---- 3. R ÐÍÒÆÎ» ----
+        // ---- 3. R ï¿½ï¿½ï¿½ï¿½Î» ----
         check_mem(32'h10, 32'h00000010, "sll");
         check_mem(32'h14, 32'h08000000, "srl");
         check_mem(32'h18, 32'hF8000000, "sra");
         // ---- 4. slt / sltu ----
         check_mem(32'h1C, 32'h00000001, "slt");
         check_mem(32'h20, 32'h00000000, "sltu");
-        // ---- 5. Âß¼­ ----
+        // ---- 5. ï¿½ß¼ï¿½ ----
         check_mem(32'h24, 32'h00000000, "and");
         check_mem(32'h28, 32'hFFFFFFFF, "or");
         check_mem(32'h2C, 32'hFFFFFFFF, "xor");
-        // ---- 6. I ÐÍÁ¢¼´Êý ----
+        // ---- 6. I ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ----
         check_mem(32'h30, 32'h00000005, "addi");
         check_mem(32'h34, 32'h00000001, "slti");
         check_mem(32'h38, 32'h00000001, "sltiu");
         check_mem(32'h3C, 32'h000000F5, "xori");
         check_mem(32'h40, 32'h000000FA, "ori");
         check_mem(32'h44, 32'h0000000A, "andi");
-        // ---- 7. ÒÆÎ»Á¢¼´Êý ----
+        // ---- 7. ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ----
         check_mem(32'h48, 32'h00000008, "slli");
         check_mem(32'h4C, 32'h10000000, "srli");
         check_mem(32'h50, 32'hF0000000, "srai");
@@ -93,7 +94,7 @@ module tb_pipe_full;
         check_mem(32'h6C, 32'h000000DD, "sb");
         check_mem(32'h70, 32'h00003344, "sh");
         check_mem(32'h74, 32'hDEADBEEF, "sw");
-        // ---- 9. ·ÖÖ§£¨Æ«ÒÆÓë full.s Ò»Ò»¶ÔÓ¦£©----
+        // ---- 9. ï¿½ï¿½Ö§ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½ full.s Ò»Ò»ï¿½ï¿½Ó¦ï¿½ï¿½----
         check_mem(32'h7C, 32'h00000005, "beq");
         check_mem(32'h80, 32'h00000000, "trap_bne");
         check_mem(32'h84, 32'h00000005, "bne");
@@ -112,7 +113,7 @@ module tb_pipe_full;
         check_mem(32'hB4, 32'h000001FC, "jalr_link");
         check_mem(32'hB8, 32'h00000000, "trap_jalr2");
         check_mem(32'hBC, 32'h00000001, "jalr_done");
-        // ---- ÏÝÚå¼ì²é£¨²»Ó¦Ö´ÐÐÂ·¾¶£©----
+        // ---- ï¿½ï¿½ï¿½ï¿½ï¿½é£¨ï¿½ï¿½Ó¦Ö´ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½----
         check_mem(32'h78, 32'h00000000, "trap_beq");    // 120
         if (errors == 0)
             $display("TEST PASSED (pipe_full)");

@@ -798,3 +798,137 @@ ERROR: [Synth 8-3391] ... 'bram_write.mem1_reg' ...
   2. 重新综合 AC7021B（RTL 已改 v0.10，旧 bit 过期），上板验证。
   3. 补 README（CoreMark/应用/文档/上板章节）；git 提交 v0.9/v0.10；push。
   4. riscv-tests 回归 + 应用演示（matmul/qsort）确认无回归。
+
+
+---
+
+# v0.11 - v0.15 工作记录（2026-10-18 ~ 2026-10-20）
+
+> 本轮主线：CoreMark 性能优化（预测器正确性闭环） + 应用验证 + 流程硬化。
+> 目标（赛题评分）：程序演示 CoreMark>=250/s@100MHz（满分 10 分）+ 完整跑分输出（10 分）+ 资源<5K（10 分）。
+
+## 1. v0.11：BTB 扩容 1024 项 —— 无收益（死路）
+
+- **时间**：2026-10-18
+- **工作目标**：CoreMark 预测开跑分 68.2/s，mispredict 183,857 太高；猜测 BTB 容量不足（预测器命中率低）。
+- **问题**：BTB 128 项 -> 1024 项（patch_rtl_btb_1024.py）。
+- **实验**：CoreMark 预测开重跑。
+- **结果**：cycles~1,523,558，几乎无变化（<1%）。mispredict 数量没有明显下降。
+- **结论**：瓶颈不是 BTB 容量，而是**预测器正确性问题**（目标不一致、bubble 逃逸）——v0.10 已发现预测开 CRC 错，
+  问题指向预测直跳路径，BTB 扩容是死路，回退。
+- **下一步**：深挖预测器正确性 -> v0.12。
+
+## 2. v0.12：pred_target 流水化 —— 影子链错位修复
+
+- **时间**：2026-10-18
+- **工作目标**：v0.10 发现 BTB 命中时 pred_target 与指令不同步（影子链错位），导致跳转目标取错。
+- **问题**：pred_target 用组合/影子寄存器，跨流水线时错位；分支预测跳转的目标地址与指令不对应。
+- **解决**：把 pred_target 做成真流水寄存器——reg_ifid/reg_idex 增加 pred_target 端口（fix_pipe_ports.py + patch_rtl_pred_target.py），
+  与 pc/instr/valid 同步流水。
+- **实验**：回归（tb_pipe_full）+ CoreMark 预测开。
+- **结果**：回归 PASS。CoreMark 预测开仍死循环（timeout）——定位到新的更深问题。
+- **结论**：pred_target 对齐正确，但预测直跳路径还有逻辑漏洞。
+
+## 3. v0.13：JAL 链接值转发修复 + 双重提交定位
+
+- **时间**：2026-10-18 ~ 2026-10-19
+- **工作目标**：修掉 CoreMark 预测开死循环。
+- **问题 1（根因 v1）**：转发单元对 JAL 链接值转发错误。WB 写 pcplus4（resultsrc=2'b10），
+  但转发数据经 mem_result_m/wb_result_w 走的是 alu_result（分支目标）。`call` 后 `mv t0,ra` 读到被腐蚀的 ra
+  -> 后面 `jr t0` 跳到 0x335c -> 无限自循环。
+- **解决 1**：patch_rtl_jal_forward.py 修两处 assign，新增 `resultsrc==2'b10 ? pcplus4 : ...`。
+- **实验 1**：回归 PASS，CoreMark 跑完但 CRC 错（listcrc 0x7d6c != 0xe714）；PREDICT_OFF 对照 CRC 全对
+  -> 转发修复正确，bug 在预测直跳路径。
+- **问题 2（根因 v2，双重提交）**：
+  - 全量 WR/SW 探针 diff 因控制流分叉 VC 索引失效；改提交流 diff（MEM 段 pc 序列）。
+  - 首个分歧 committed#18931：预测开 = 554,558,**558**,55c（0x558 重复提交两次）；预测关 = 554,558,55c,560。
+  - EV 窗口探针（26080-26150，含 stallf/stalld/flushe/valid_f2/valid_id/valid_e/valid_m）：
+    26080-26084 时序：26084(MEM=0x560 首次提交)/26085(MEM=0x558)/26086(sF=1)/26087(MEM=0x554)；
+    FETCH 侧 gap 拉到 558 前 a 已跳 554（预测 taken 拉地址）但 CTR 不执行跳转（EX 的 558 不 T）
+    -> **双重提交物理环路成立**。
+  - 受影响代码：core_bench_list 0x554 lw a5,0(a5) -> 0x55c lw a4,4(a5) -> 0x560 lh a6,2(a4) -> 0x564 bne a6,s3,554
+    （链表遍历/反转），0x624-0x634 反向遍历循环。
+- **结果**：v0.13 跑完 cycles=1,160,430 tick=1,109,651 -> 86.2/s（misp 59,868 mismatch=0），
+  但 CRC 仍错（双重提交把链表遍历搞坏）。**双重提交是 CoreMark 预测开 CRC 错的最终根因。**
+- **下一步**：设计 dup_fetch 抑制 -> v0.14。
+
+## 4. v0.14：三轮失败与回退（重要 debug 过程）
+
+- **时间**：2026-10-19
+- **目标**：抑制"预测 taken 重定向目标被重复捕获"造成的双重提交。
+- **方案 A：纯组合 valid 抑制（已回退）**
+  - 实现：`valid_ifid_in = (a_r==addr_prev)&&(pcf!=pcf_prev) ? 0 : valid_f2`。
+  - 失败：**误伤 mispredict 路径**。mispredict 时 read#1 被 flush 丢弃（valid_f2<=0、reg_ifid flushed），
+    read#2 才是目标指令的真正捕获；抑制后目标丢失 -> 启动 memset 边界未初始化 -> 死循环（2M timeout，pc=0x24 附近 x4+0 写循环）。
+- **方案 B：redirect_prev（已回退）**
+  - 实现：`redirect_prev <= pred_taken_eff & ~stallf & ~mispredict`，`a_comb = redirect_prev ? pcplus4_f : ...`。
+  - 失败：**破坏自循环/分支链**。`j 自身` 的目标重复读取是架构上正确的再执行（跳到 T+4 跳过它）
+    -> 回归挂死 pc=0x2e40（j 自循环）。
+- **方案 C：FINAL 组合抑制（v0.14，已废弃回退）**
+  - 实现：`dup_fetch = (a_r==addr_prev)&&(pcf!=pcf_prev)&&prev_cap_valid&&~pred_taken_eff`，
+    `valid_ifid_in = dup_fetch ? 0 : valid_f2`；prev_cap_valid 在 mispredict 清 0、stalld 保持、否则记录 valid_ifid_in。
+  - 失败：回归 FAIL（8 errors：lbu/lh/lhu/lw/sb/sh/sw/trap_beq 全错）。
+  - **调试过程**：
+    1. 先用 EX 指令流探针（WR/SW/EX 窗口 40-135）定位 load 段（full.s 0x104 lbu / 0x108 sw），
+       发现 lbu@0x104 在 EX71+EX72 被执行**两次（双重提交）且 sw@0x108 从未执行**。
+    2. 再加 IF 全信号按拍 dump（62-82：a_r/pcf/pc_f2/valid_f2/addr_prev/pcf_prev/prev_cap_valid/dup_fetch/valid_ifid_in/stallf/stalld/stall_release/pred_taken_eff/mispredict）：
+       - cycle 65-66：load-use stall（sf=1/sd=1），IF2 保持 0xfc；cycle 66 释放（rel=1），a_comb=pcf_next=0x100，a_r=0x104；
+       - cycle 68：第二个 load 的 stall 释放后（rel=1）a_r 从 0x100 捕获冻结的 0x104（f2=0x104,v2=1,ap=0x104,pp=0x104,dub_fetch=1->vin=0），
+         `(a_r==addr_prev)&&(pcf!=pcf_prev)` 判据**未命中真实重复**（此时 a_r/addr_prev 同步为 0x104）；
+       - 随后 cycle 70 a_r=0x108 时地址判据命中——但 0x108 是合法指令**被误杀**（dup_fetch=1,vin=0），双杀方向完全反了。
+  - **根因分析**：IF2 寄存器比 a_r 慢一拍；stall 释放后 else 分支用冻结的 a_r 重捕同一指令
+    -> IF2 同一指令滞留两拍 -> reg_ifid 连捕两次；a_r 追及时合法指令被地址判据误杀。
+    **地址比对判据错（比的是取指地址而非已捕获内容）**。
+- **结论**：地址类判据全部失败。正确方向是**内容比对**（IF2 与 ID 的内容是否相同）-> v0.15。
+
+## 5. v0.15：内容比对 dup_fetch 抑制 —— 正解（当前 RTL）
+
+- **时间**：2026-10-20
+- **实现**：`dup_fetch = (pc_f2 == pc_id) && valid_id && ~pred_taken_eff`，
+  `valid_ifid_in = dup_fetch ? 0 : valid_f2`（assign 放在 reg_ifid 例化之后，pc_id/valid_id 已声明）。
+  - 覆盖三类重复：stall-release 滞后、pred-taken 重定向目标重读（CoreMark 0x558）、
+    mispredict 目标重复（flush 清 valid_id -> 不抑制，保护合法捕获）；
+  - `~pred_taken_eff` 保护 j 自循环/分支链（架构上正确的再执行）。
+  - 删除 prev_cap_valid（不再需要）。
+- **遇到的编译问题**：xvlog "pc_id used before declaration" -> 把两行 assign 移到 reg_ifid 例化之后（pc_id/valid_id 声明之后）。
+- **实验与结果（全绿）**：
+  - tb_pipe_full 回归：PASS，cycles=175，load 段 EX 流正确（lbu@0x104 仅一次、sw@0x108 不再丢失）；
+  - riscv-tests 官方套件：40/42 PASS（ma_data/fence_i 已知 SKIP）；
+  - CoreMark 预测开：PASS（halt at pc=0x40, gp=1, cycles=1,152,213；
+    PERF inst=778,470 stall=11,911 misp=59,431 br=236,352 taken=156,532）；
+    —— 对比 v0.10：misp 183,857 -> 59,431（3.1x 下降），cycles 1,522,013 -> 1,152,213（-24%）；
+  - matmul 3x3：PASS（gp=1, cycles=8,503，9 元素自校验全过）；
+  - qsort 8 元素：PASS（gp=1, cycles=871，自校验全过）。
+- **结论**：双重提交闭环修复。CoreMark 预测开与预测关 CRC 一致（gp=1 即 CoreMark 自校验通过）。
+
+## 6. 应用验证踩坑与流程硬化（2026-10-20 本轮）
+
+- **问题 1：matmul/qsort 用 tb_pipe_full 验证全错（39 errors 全 0）**
+  - 初判像 CPU bug，实际是**验证方式错误**：tb_pipe_full 的 check_mem 是 full.s 专用的（检查 DMEM[0x300..0x3BC]），
+    matmul/qsort 的数据区在代码段内、结果写在别处，检查逻辑不匹配。
+  - 另外 tb_pipe_full 超时只有 3000 cycles，matmul 软件乘法 27*32 轮要 8500+ cycles。
+  - **解决**：matmul/qsort 改走 tb_rvtest（gp==1 判定，20000 cycles 超时）。
+- **问题 2：残留 program.hex 串扰回归**
+  - 现象：改 TB 后回归从 PASS 变 39 errors（halted pc=0xf0，而非 0x224）。
+  - 根因：run_sim.ps1 只在传 -HEX 时覆盖 program.hex；matmul 跑完后 tb_pipe_full 工作目录里的 program.hex
+    残留为 matmul.hex，之后不带 -HEX 的回归加载了 matmul -> 跑的是 matmul（其 test_end 在 0xf0）-> full.s 检查全错。
+  - **解决**：run_sim.ps1 增加默认——tb_pipe_full 不带 -HEX 时固定用 full.hex。
+- **问题 3：Edit 工具破坏 GBK 文件编码**
+  - Edit 写 run_sim.ps1 时把 GBK 中文注释变成 UTF-8 混合字节，PowerShell 解析报
+    "Missing ')' in function parameter list"。
+  - **解决**：run_sim.ps1 整体重写为纯 ASCII（英文注释），根治编码问题。教训：**涉及中文的脚本/源文件一律纯 ASCII 或 UTF-8**。
+- **教训**：xsim 多个实例并发跑会撞同一个 work 目录（xsim.dir 无法写入）——仿真必须串行。
+
+## 7. 现状与下一步
+
+- **已完成**：设计文档（audit 0 错）、RV32I 五级流水线 + 分支预测（全部正确性闭环）、riscv-tests 40/42、
+  CoreMark 预测开 PASS（1,152,213 cycles）、matmul/qsort PASS、LED 上板闪烁（AC7021B/Zynq-7020 两次成功）、
+  资源 3154 LUT < 5K。
+- **性能**：CoreMark/s 估算 ~87/s（tick~1.14M），目标 250/s@100MHz 仍差 ~2.9x。
+- **下一步（候选，按收益排序）**：
+  1. **M 扩展硬件乘除**（mul/div/rem 单指令）——软件 __umodsi3/__udivsi3 是热点（CoreMark 里 0x2a3c-0x2a50 循环），
+     硬件乘除可砍掉大部分循环周期，预计 2-3x 收益，直接逼近 250/s；
+  2. 分支预测器 1-bit -> 2-bit 饱和计数（misp 59,431 里交替循环占大头，可再省 ~8%）；
+  3. 上板升频折算（V7/Zynq 时序余量）——若赛题允许按绝对 CoreMark/s 计；
+  4. 重综合 AC7021B bit（RTL 已改到 v0.15，旧 bit 过期）上板验证 CoreMark。
+- **git 状态**：v0.11-v0.15 全部待提交（本轮一起提交 + README 补章节 + push）。

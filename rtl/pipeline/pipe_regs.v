@@ -16,21 +16,23 @@ module reg_ifid (
     input  [31:0]     pc_in,
     input  [31:0]     instr_in,
     input             pred_in,  // ����ָ��ȡָʱ�ķ�֧Ԥ��
-    input             valid_in, // IF2 �Ŀ���λ��mispredict ��� IF2 ��Ч��
+    input             valid_in,
+    input  [31:0]     pred_target_in,  // v0.12 pred_target pipeline reg (aligned with pred) // IF2 �Ŀ���λ��mispredict ��� IF2 ��Ч��
     output reg [31:0] pc,
     output reg [31:0] instr,
     output reg        pred,
-    output reg        valid
+    output reg        valid,
+    output reg [31:0] pred_target
 );
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            pc <= 32'b0; instr <= 32'b0; pred <= 1'b0; valid <= 1'b0;
+            pc <= 32'b0; instr <= 32'b0; pred <= 1'b0; valid <= 1'b0; pred_target <= 32'b0;
         end
         else if (flush) begin
-            pc <= pc_in; instr <= instr_in; pred <= pred_in; valid <= 1'b0;
+            pc <= pc_in; instr <= instr_in; pred <= pred_in; valid <= 1'b0; pred_target <= pred_target_in;
         end
         else if (enable) begin
-            pc <= pc_in; instr <= instr_in; pred <= pred_in; valid <= valid_in;
+            pc <= pc_in; instr <= instr_in; pred <= pred_in; valid <= valid_in; pred_target <= pred_target_in;
         end
     end
 endmodule
@@ -53,6 +55,7 @@ module reg_idex (
     input  [6:0]      funct7_d,
     input  [6:0]      opcode_d,
     input             pred_d,
+    input  [31:0]     pred_target_d,  // v0.12 pred_target pipeline reg (aligned with pred)
     // ���
     output reg        regwrite, alusrca, alusrcb, memwrite, branch, jump,
     output reg [1:0]  resultsrc,
@@ -65,6 +68,7 @@ module reg_idex (
     output reg [6:0]  funct7,
     output reg [6:0]  opcode,
     output reg        pred,
+    output reg [31:0] pred_target,
     output reg        valid
 );
     always @(posedge clk or posedge reset) begin
@@ -75,7 +79,7 @@ module reg_idex (
             resultsrc <= 2'b00; aluop <= 2'b00; jalr <= 1'b0;
             pc <= 32'b0; rd1 <= 32'b0; rd2 <= 32'b0; immext <= 32'b0;
             rs1 <= 5'b0; rs2 <= 5'b0; rd <= 5'b0;
-            funct3 <= 3'b0; funct7 <= 7'b0; opcode <= 7'b0; pred <= 1'b0;
+            funct3 <= 3'b0; funct7 <= 7'b0; opcode <= 7'b0; pred <= 1'b0; pred_target <= 32'b0;
         end
         else if (flush) begin
             // ��ˢ��valid=0 �����ȫ�������źţ��������ָ���� EX/MEM/WB ���д�أ�
@@ -85,7 +89,7 @@ module reg_idex (
             resultsrc <= 2'b00; aluop <= 2'b00; jalr <= 1'b0;
             pc <= pc_d; rd1 <= rd1_d; rd2 <= rd2_d; immext <= immext_d;
             rs1 <= rs1_d; rs2 <= rs2_d; rd <= rd_d;
-            funct3 <= funct3_d; funct7 <= funct7_d; opcode <= opcode_d; pred <= pred_d;
+            funct3 <= funct3_d; funct7 <= funct7_d; opcode <= opcode_d; pred <= pred_d; pred_target <= pred_target_d;
         end
         else begin
             valid <= 1'b1;
@@ -94,7 +98,7 @@ module reg_idex (
             resultsrc <= resultsrc_d; aluop <= aluop_d;   jalr <= jalr_d;
             pc <= pc_d; rd1 <= rd1_d; rd2 <= rd2_d; immext <= immext_d;
             rs1 <= rs1_d; rs2 <= rs2_d; rd <= rd_d;
-            funct3 <= funct3_d; funct7 <= funct7_d; opcode <= opcode_d; pred <= pred_d;
+            funct3 <= funct3_d; funct7 <= funct7_d; opcode <= opcode_d; pred <= pred_d; pred_target <= pred_target_d;
         end
     end
 endmodule

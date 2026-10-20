@@ -12,9 +12,12 @@ module tb_coremark;
     reg        reset = 1;
     wire [31:0] pc, instr;
     integer cycles = 0;
+    integer inst_cnt = 0, stall_cnt = 0, misp_cnt = 0, br_cnt = 0, taken_cnt = 0, nonbr_cnt = 0;
+    integer misp_dir = 0, misp_jalr = 0, misp_mm = 0, resolved_cnt = 0, jal_cnt = 0, jalr_cnt = 0;
     reg [31:0] pc_p1 = 0, pc_p2 = 0, pc_p3 = 0, pc_p4 = 0;
     reg [31:0] hist_pc [0:63];
     integer hist_idx = 0;
+    reg first_umod = 0;
     reg captured = 0;
     reg [31:0] a5_last = 32'hFFFFFFFF;
     reg [31:0] rev_last = 32'hFFFFFFFF;
@@ -195,8 +198,32 @@ module tb_coremark;
             end
             // halt 检测：pc_e==0x40 (j 0x40) 且 gp(x3)==1 → 程序正常结束
             // （原 PC 5 拍不变判据在 halt 循环预取振荡下永不满足，故补充本判据）
+            // v0.13 全量写回跟踪：WR 周期 pc rd wd（用于与 PREDICT_OFF 金标准 diff 定位首个错误写）
+            if (dut.regwrite_w && dut.valid_w && dut.rd_w != 5'b0) begin
+                $display("WR %0d pc=%08X rd=%0d wd=%08X", cycles, dut.pcplus4_w - 32'd4, dut.rd_w, dut.writedata_w);
+            end
+            // v0.13 全量 store 跟踪：SW 周期 addr data（链表腐蚀定位）
+            if (dut.memwrite_m && dut.valid_m && dut.alu_result_m[31:28] != 4'hF) begin
+                $display("SW %0d addr=%08X data=%08X", cycles, dut.alu_result_m, dut.writedata_m);
+            end
+            // v0.13 提交流跟踪：MEM 段 pc（架构可见指令流，两运行必须一致）
+            if (dut.valid_m) begin
+                $display("MEM %0d pc=%08X", cycles, dut.pcplus4_m - 32'd4);
+            end
+            // v0.13 全事件窗口探针：双重提交定位（cycle 26080-26150）
+            if (cycles >= 26080 && cycles <= 26150) begin
+                $display("EV[%0d] F a=%08X pred=%b pt=%08X | EX pc=%08X pred=%b taken=%b misp=%b | MEM pc=%08X | sF=%b sD=%b fE=%b vF2=%b vID=%b vE=%b vM=%b",
+                         cycles, dut.a_r, dut.pred_taken_eff, dut.pred_target_eff,
+                         dut.pc_e, dut.pred_e, dut.branch_taken_e, dut.mispredict,
+                         dut.pcplus4_m - 32'd4,
+                         dut.stallf, dut.stalld, dut.flushe, dut.valid_f2, dut.valid_id, dut.valid_e, dut.valid_m);
+            end
             if (dut.pc_e == 32'h00000040 && dut.valid_e && dut.rf.mem[3] == 32'h1 && cycles > 100000) begin
                 $display("PASS: halt at pc=0x40, gp=1, cycles=%0d", cycles);
+                $display("PERF: inst=%0d stall=%0d misp=%0d br=%0d taken=%0d nonbr_pred=%0d",
+                         inst_cnt, stall_cnt, misp_cnt, br_cnt, taken_cnt, nonbr_cnt);
+                $display("MISP: dir=%0d jalr=%0d mismatch=%0d resolved=%0d jal=%0d jalr_exec=%0d",
+                         misp_dir, misp_jalr, misp_mm, resolved_cnt, jal_cnt, jalr_cnt);
                 $display("TEST PASSED (coremark)");
                 $finish;
             end
@@ -221,6 +248,39 @@ module tb_coremark;
             end
             if (dut.pc_e == 32'h3388) begin
                 $display("[%0d] udivsi3 entry: a0=%08X a1=%08X", cycles, dut.rf.mem[10], dut.rf.mem[11]);
+            end
+            if (dut.pc_e == 32'h3354 && dut.valid_e) begin
+                if (!first_umod) begin
+                    first_umod = 1;
+                    $display("[%0d] FIRST umodsi3-entry ra=%08X t0=%08X", cycles, dut.rf.mem[1], dut.rf.mem[5]);
+                    $display("  recent PCs (newest first):");
+                    begin : umod_hist
+                        integer k, shown;
+                        reg [31:0] last;
+                        reg [31:0] p;
+                        shown = 0; last = 32'hFFFFFFFF;
+                        for (k = 0; k < 64 && shown < 16; k = k + 1) begin
+                            p = hist_pc[(hist_idx - 1 - k + 64) % 64];
+                            if (p !== last) begin
+                                $display("    pc=%08X", p);
+                                last = p;
+                                shown = shown + 1;
+                            end
+                        end
+                    end
+                end
+                $display("[%0d] umodsi3-entry ra=%08X t0=%08X", cycles, dut.rf.mem[1], dut.rf.mem[5]);
+            end
+            if (dut.pc_e == 32'h3378 && dut.valid_e) begin
+                $display("[%0d] divsi-tail mv-t0-ra ra=%08X", cycles, dut.rf.mem[1]);
+            end
+            if (dut.pc_e == 32'h3360 && dut.valid_e) begin
+                $display("[%0d] jr-t0 t0=%08X", cycles, dut.rf.mem[5]);
+            end
+            if (cycles >= 1137450 && cycles <= 1137570 && dut.valid_e) begin
+                $display("[%0d] W-EX pc=%08X pred=%b taken=%b pt=%08X bt=%08X misp=%b jalr=%b j=%b b=%b",
+                         cycles, dut.pc_e, dut.pred_e, dut.branch_taken_e, dut.pred_target_e,
+                         dut.branch_target_e, dut.mispredict, dut.jalr_e, dut.jump_e, dut.branch_e);
             end
             if (dut.pc_e == 32'h3394) begin
                 $display("[%0d] udiv beqz-a2: a2=%08X a1=%08X a0=%08X", cycles, dut.rf.mem[12], dut.rf.mem[11], dut.rf.mem[10]);
@@ -247,6 +307,34 @@ module tb_coremark;
         while (cycles < 2000000) begin
             @(posedge clk);
             cycles = cycles + 1;
+            if (dut.valid_w) inst_cnt = inst_cnt + 1;
+            if (dut.stallf) stall_cnt = stall_cnt + 1;
+            if (dut.mispredict) begin
+                misp_cnt = misp_cnt + 1;
+                if (misp_cnt <= 300)
+                    $display("[%0d] MIS cyc=%0d pc_e=%08X v=%b b=%b j=%b jalr=%b pred=%b taken=%b pt=%08X bt=%08X",
+                             cycles, misp_cnt, dut.pc_e, dut.valid_e, dut.branch_e, dut.jump_e, dut.jalr_e,
+                             dut.pred_e, dut.branch_taken_e, dut.pred_target_e, dut.branch_target_e);
+                if (dut.valid_e && dut.jalr_e && dut.pred_e) misp_jalr = misp_jalr + 1;
+                else if (dut.valid_e && (dut.branch_e || dut.jump_e) && (dut.branch_taken_e != dut.pred_e))
+                    misp_dir = misp_dir + 1;
+                else if (dut.valid_e && ~dut.jalr_e && dut.pred_e && (dut.branch_e || dut.jump_e) &&
+                         (dut.pred_target_e != dut.branch_target_e)) begin
+                    misp_mm = misp_mm + 1;
+                    if (misp_mm <= 10)
+                        $display("[%0d] MM pc_e=%08X pred_t=%08X br_t=%08X pred=%b taken=%b pe=%08X",
+                                 cycles, dut.pc_e, dut.pred_target_e, dut.branch_target_e,
+                                 dut.pred_e, dut.branch_taken_e, dut.pc_e);
+                end
+            end
+            if (dut.branch_resolved_e) resolved_cnt = resolved_cnt + 1;
+            if (dut.valid_e && dut.jalr_e) jalr_cnt = jalr_cnt + 1;
+            if (dut.valid_e && dut.jump_e && ~dut.jalr_e) jal_cnt = jal_cnt + 1;
+            if (dut.valid_e && (dut.branch_e || dut.jump_e)) begin
+                br_cnt = br_cnt + 1;
+                if (dut.branch_taken_e) taken_cnt = taken_cnt + 1;
+            end
+            if (dut.valid_e && dut.pred_e && ~(dut.branch_e || dut.jump_e)) nonbr_cnt = nonbr_cnt + 1;
             hist_pc[hist_idx] = pc;
             hist_idx = (hist_idx + 1) % 64;
             if (cycles > 30 && pc == pc_p1 && pc == pc_p2 && pc == pc_p3 && pc == pc_p4) begin
