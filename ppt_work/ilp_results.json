@@ -1,0 +1,101 @@
+[
+ {
+  "label": "inorder W=1",
+  "W": 1,
+  "WIN": 0,
+  "issue_cyc": 799139,
+  "ipc": 0.974,
+  "total_cyc": 918857,
+  "per_sec": 108.8
+ },
+ {
+  "label": "inorder W=2",
+  "W": 2,
+  "WIN": 0,
+  "issue_cyc": 450056,
+  "ipc": 1.73,
+  "total_cyc": 689492,
+  "per_sec": 145.0
+ },
+ {
+  "label": "inorder W=4",
+  "W": 4,
+  "WIN": 0,
+  "issue_cyc": 336661,
+  "ipc": 2.312,
+  "total_cyc": 815533,
+  "per_sec": 122.6
+ },
+ {
+  "label": "oos W=2 WIN=32",
+  "W": 2,
+  "WIN": 32,
+  "issue_cyc": 397347,
+  "ipc": 1.959,
+  "total_cyc": 636783,
+  "per_sec": 157.0
+ },
+ {
+  "label": "oos W=4 WIN=32",
+  "W": 4,
+  "WIN": 32,
+  "issue_cyc": 237533,
+  "ipc": 3.277,
+  "total_cyc": 716405,
+  "per_sec": 139.6
+ },
+ {
+  "label": "oos W=2 WIN=64",
+  "W": 2,
+  "WIN": 64,
+  "issue_cyc": 396493,
+  "ipc": 1.963,
+  "total_cyc": 635929,
+  "per_sec": 157.3
+ },
+ {
+  "label": "oos W=4 WIN=64",
+  "W": 4,
+  "WIN": 64,
+  "issue_cyc": 231027,
+  "ipc": 3.37,
+  "total_cyc": 709899,
+  "per_sec": 140.9
+ },
+ {
+  "label": "oos W=2 WIN=128",
+  "W": 2,
+  "WIN": 128,
+  "issue_cyc": 395859,
+  "ipc": 1.967,
+  "total_cyc": 635295,
+  "per_sec": 157.4
+ },
+ {
+  "label": "oos W=4 WIN=128",
+  "W": 4,
+  "WIN": 128,
+  "issue_cyc": 227504,
+  "ipc": 3.422,
+  "total_cyc": 706376,
+  "per_sec": 141.6
+ },
+ {
+  "label": "oos W=2 unbounded",
+  "W": 2,
+  "WIN": 0,
+  "issue_cyc": 393248,
+  "ipc": 1.98,
+  "total_cyc": 632684,
+  "per_sec": 158.1
+ },
+ {
+  "label": "oos W=4 unbounded",
+  "W": 4,
+  "WIN": 0,
+  "issue_cyc": 213343,
+  "ipc": 3.649,
+  "total_cyc": 692215,
+  "per_sec": 144.5
+ }
+]
