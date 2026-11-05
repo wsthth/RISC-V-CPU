@@ -122,7 +122,7 @@ RISC-V/
 - 工具链：xpack riscv-none-elf-gcc-14.3.0，`-O2 -march=rv32i` 裸机编译 CoreMark 1.0
 - 移植（`testprog/` 内联）：portme 定制——EE_TICKS_PER_SEC=1e8，MMIO 计时/输出，ITERATIONS=1，
   CoreMark 自校验结果经 gp(x3) 返回，tb 判定 gp==1 为 PASS（CRC 内部全检：seedcrc=0xe9f5、crclist=0xe714、crcmatrix=0x1fd7、crcstate=0x8e3a）
-- 仿真：`powershell -File sim\scripts\run_sim.ps1 -TB tb_coremark -HEX testprog\hex\coremark1.hex -DATA testprog\hex\coremark1.data.hex`
+- 仿真：`powershell -ExecutionPolicy Bypass -File sim\scripts\run_sim.ps1 -TB tb_coremark -HEX testprog\hex\coremark1.hex -DATA testprog\hex\coremark1.data.hex`
 
 | 版本 | 预测 | 结果 | cycles | inst | stall | misp | 折算 CoreMark/s@100MHz |
 |---|---|---|---|---|---|---|---|
@@ -145,25 +145,32 @@ RISC-V/
 
 ## 如何仿真（Vivado 2019.1）
 
+> **前置条件**：先 `cd` 到项目根目录（即本 README 所在目录），下面所有命令的相对路径都基于它。
+> Windows 默认禁止跑未签名 ps1，必须加 `-ExecutionPolicy Bypass`，否则会报"加载脚本被禁用"。
+> 如果已经在项目根目录且当前 shell 策略允许，也可以直接 `.\sim\scripts\run_sim.ps1 ...`。
+
 ```powershell
+# 0) 进入项目根目录（首次必做）
+cd D:\my_project\RISC-V
+
 # 1) 汇编测试程序 -> hex
 python tools\riscv_asm.py testprog\basic.s testprog\hex
 
 # 2) 跑模块级 TB
-powershell -File sim\scripts\run_sim.ps1 -TB tb_alu
-powershell -File sim\scripts\run_sim.ps1 -TB tb_regfile
+powershell -ExecutionPolicy Bypass -File sim\scripts\run_sim.ps1 -TB tb_alu
+powershell -ExecutionPolicy Bypass -File sim\scripts\run_sim.ps1 -TB tb_regfile
 
 # 3) 跑单周期整机（需加载 hex）
-powershell -File sim\scripts\run_sim.ps1 -TB tb_single -HEX testprog\hex\basic.hex
+powershell -ExecutionPolicy Bypass -File sim\scripts\run_sim.ps1 -TB tb_single -HEX testprog\hex\basic.hex
 
 # 4) 跑流水线整机（basic / hazard / branch / full 四套测试）
-powershell -File sim\scripts\run_sim.ps1 -TB tb_pipe_basic  -HEX testprog\hex\basic.hex
-powershell -File sim\scripts\run_sim.ps1 -TB tb_pipe_hazard -HEX testprog\hex\hazard.hex
-powershell -File sim\scripts\run_sim.ps1 -TB tb_pipe_branch -HEX testprog\hex\branch.hex
-powershell -File sim\scripts\run_sim.ps1 -TB tb_pipe_full   -HEX testprog\hex\full.hex
+powershell -ExecutionPolicy Bypass -File sim\scripts\run_sim.ps1 -TB tb_pipe_basic  -HEX testprog\hex\basic.hex
+powershell -ExecutionPolicy Bypass -File sim\scripts\run_sim.ps1 -TB tb_pipe_hazard -HEX testprog\hex\hazard.hex
+powershell -ExecutionPolicy Bypass -File sim\scripts\run_sim.ps1 -TB tb_pipe_branch -HEX testprog\hex\branch.hex
+powershell -ExecutionPolicy Bypass -File sim\scripts\run_sim.ps1 -TB tb_pipe_full   -HEX testprog\hex\full.hex
 
 # 5) 输出波形（生成 waves.vcd，可用 xsim/GTKWave 查看）
-powershell -File sim\scripts\run_sim.ps1 -TB tb_single -HEX testprog\hex\basic.hex -Wave
+powershell -ExecutionPolicy Bypass -File sim\scripts\run_sim.ps1 -TB tb_single -HEX testprog\hex\basic.hex -Wave
 ```
 
 所有 TB 结束时打印 `TEST PASSED` / `TEST FAILED`，脚本退出码 0/1 对应结果。
